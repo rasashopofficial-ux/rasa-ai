@@ -98,7 +98,7 @@ function useTypewriter(text, speed = 18, active = true) {
 
 // ── Claude API call ────────────────────────────────────────────
 async function callClaude(systemPrompt, userPrompt, maxTokens = 1200) {
-  const AKEY = "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";
+  Uy4OgxrWRgOFaGrG8t5SDyl_v0q0M8KgeiP1MywGpEiHpMa8bPWtogU8xySA011EpCdwKPvNSDkt_BFAEw-6rNCCgAA";
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
