@@ -98,11 +98,12 @@ function useTypewriter(text, speed = 18, active = true) {
 
 // ── Claude API call ────────────────────────────────────────────
 async function callClaude(systemPrompt, userPrompt, maxTokens = 1200) {
+  const ANTHROPIC_KEY = "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";
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": "sk-ant-api03-YOUR-KEY-HERE",
+      "x-api-key": ANTHROPIC_KEY,
       "anthropic-version": "2023-06-01",
       "anthropic-dangerous-direct-browser-access": "true"
     },
@@ -117,6 +118,7 @@ async function callClaude(systemPrompt, userPrompt, maxTokens = 1200) {
   const data = await res.json();
   return data.content?.map(b => b.text || "").join("").replace(/```json\n?|```/g, "").trim();
 }
+
 // ── SVG Logo ───────────────────────────────────────────────────
 function RasaLogo({ size = 32 }) {
   return (
