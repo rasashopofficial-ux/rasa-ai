@@ -100,7 +100,12 @@ function useTypewriter(text, speed = 18, active = true) {
 async function callClaude(systemPrompt, userPrompt, maxTokens = 1200) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": "sk-ant-api03-YOUR-KEY-HERE",
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
       max_tokens: maxTokens,
@@ -112,7 +117,6 @@ async function callClaude(systemPrompt, userPrompt, maxTokens = 1200) {
   const data = await res.json();
   return data.content?.map(b => b.text || "").join("").replace(/```json\n?|```/g, "").trim();
 }
-
 // ── SVG Logo ───────────────────────────────────────────────────
 function RasaLogo({ size = 32 }) {
   return (
