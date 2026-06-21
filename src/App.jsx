@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 /* ═══════════════════════════════════════════════════════════════
-   RASA.AI — Complete Social Media Influencer Platform
+   RASA.AI - Complete Social Media Influencer Platform
    Design: Deep obsidian + electric magenta + liquid gold
    Signature: Morphing orb hero that reacts to user interaction
 ═══════════════════════════════════════════════════════════════ */
@@ -375,111 +375,69 @@ export default function RasaAI() {
 
     try {
       let raw, parsed;
-      const SYSTEM = `You are rasa.ai's world-class viral content strategist and social media algorithm expert. You have deep knowledge of:
-- Instagram algorithm (Reels get 3x reach, carousels get 2x saves, first 3 seconds determine everything)
-- YouTube algorithm (CTR, watch time, first 30 seconds hook, chapters)
-- TikTok algorithm (completion rate, shares, duets, trending sounds)
-- Facebook algorithm (meaningful interactions, video watch time, shares)
-- Twitter/X algorithm (replies, retweets, bookmarks in first hour)
-- LinkedIn algorithm (dwell time, comments, early engagement)
-
-You create content that:
-1. Hooks viewers in first 3 seconds using proven psychological triggers
-2. Uses platform-specific optimal formats and lengths
-3. Leverages trending topics and sounds
-4. Creates emotional responses (surprise, inspiration, humor, curiosity)
-5. Drives specific engagement actions (saves, shares, comments)
-6. Uses proven viral formulas (problem-solution, before-after, storytelling)
-
-Always respond ONLY with valid JSON — no markdown fences, no preamble, no extra text.`;
+      const SYSTEM = `You are rasa.ai viral content expert with deep knowledge of Instagram, YouTube, TikTok and Facebook algorithms. Generate viral-optimized content. Always respond ONLY with valid JSON - no markdown fences, no preamble, no extra text.`;
 
       if (activeTool === "text-image") {
-        raw = await callClaude(SYSTEM, `Generate VIRAL-OPTIMIZED image content for ${platformName} ${activeFormat}.
+        raw = await callClaude(SYSTEM, `Generate ultra-realistic image content for ${platformName} ${activeFormat}.
 Tone: ${tone}
 Brief: ${prompt}
-Platform Algorithm Focus: ${platformName}
 
 Return JSON only:
 {
-  "imagePrompt": "Hyper-detailed photorealistic Midjourney v6/DALL-E 3/Stable Diffusion prompt, 200+ words, include: exact lighting setup, camera angle, lens type (35mm/50mm/85mm), aperture, color grading style, mood board reference, specific visual elements, background details, foreground details, texture details, time of day, weather, cinematic style reference",
-  "negativePrompt": "ugly, blurry, low quality, watermark, text, cartoon, illustration, CGI, oversaturated, distorted",
-  "imageUrl": "https://image.pollinations.ai/prompt/PLACEHOLDER",
-  "caption": "Viral ${platformName}-native caption using proven hook formula. Start with curiosity gap or bold statement. Use strategic emoji placement. Include storytelling element. 150-220 chars for Instagram, shorter for Twitter, longer for LinkedIn",
-  "captionVersions": [
-    {"type": "Curiosity Gap", "text": "caption version 1 that creates curiosity"},
-    {"type": "Bold Statement", "text": "caption version 2 with bold controversial statement"},
-    {"type": "Story Hook", "text": "caption version 3 with mini story opening"}
-  ],
-  "hashtags": {
-    "viral": ["trending1","trending2","trending3","trending4","trending5"],
-    "niche": ["niche1","niche2","niche3","niche4","niche5"],
-    "broad": ["broad1","broad2","broad3","broad4","broad5"]
-  },
-  "hook": "3-second scroll-stopping hook using psychological trigger (curiosity/surprise/controversy/humor)",
-  "hookVariants": ["hook option 1", "hook option 2", "hook option 3"],
-  "cta": "Specific psychology-driven CTA that drives saves/shares/comments",
-  "altText": "SEO-rich descriptive alt text for accessibility and discoverability",
-  "bestTime": "Exact day, time and timezone for peak ${platformName} engagement based on algorithm data",
+  "imagePrompt": "Hyper-detailed photorealistic Midjourney v6/DALL-E 3 prompt, 200+ words, include lighting, camera angle, lens type, color grading, mood, specific visual elements, cinematic style",
+  "negativePrompt": "ugly, blurry, low quality, watermark, text overlay, cartoon, CGI",
+  "caption": "Viral platform-native caption with perfect emoji placement, curiosity gap opening, 150-220 chars",
+  "captionV2": "Alternative caption with bold statement opening",
+  "captionV3": "Short punchy caption under 100 chars",
+  "hashtags": ["h1","h2","h3","h4","h5","h6","h7","h8","h9","h10","h11","h12","h13","h14","h15"],
+  "hook": "Ultra-compelling 3-second scroll-stopping hook using curiosity gap",
+  "hookV2": "Alternative hook using controversy or bold claim",
+  "hookV3": "Alternative hook using relatable situation",
+  "cta": "Specific psychology-driven CTA that drives saves and shares",
+  "altText": "SEO-rich descriptive alt text",
+  "bestTime": "Specific day and time for peak engagement based on algorithm",
   "viralityScore": 85,
-  "viralityReason": "Why this content will perform well",
-  "algorithmTips": ["tip1 specific to ${platformName} algorithm","tip2","tip3","tip4","tip5"],
-  "engagementBait": "Subtle question or statement to drive comments",
+  "viralityReason": "Why this content will perform well on the algorithm",
+  "algorithmTip1": "Specific platform algorithm tip 1",
+  "algorithmTip2": "Specific platform algorithm tip 2",
+  "algorithmTip3": "Specific platform algorithm tip 3",
+  "algorithmTip4": "Specific platform algorithm tip 4",
+  "algorithmTip5": "Specific platform algorithm tip 5",
+  "postingStrategy": "Exactly what to do in first 60 minutes after posting to maximise reach",
+  "competitorInsight": "What top viral creators do differently in this niche",
+  "engagementTips": ["tip1","tip2","tip3","tip4"],
   "colorPalette": ["#hex1","#hex2","#hex3"],
-  "contentStyle": "Visual style description",
-  "trendingAudio": "Suggested trending audio/music style if applicable",
-  "competitorInsight": "What top creators in this niche are doing that works",
-  "postingStrategy": "Complete strategy for first 60 minutes after posting to boost algorithm"
-}`, 1500);
-parsed = JSON.parse(raw);
-// Add real image URL
-if (parsed.imagePrompt) {
-  parsed.imageUrl = \`https://image.pollinations.ai/prompt/\${encodeURIComponent(parsed.imagePrompt)}&width=1080&height=1080&nologo=true\`;
-}
+  "contentStyle": "Brief style description for visual reference"
+}`);
         parsed = JSON.parse(raw);
+        if (parsed.imagePrompt) {
+          parsed.imageUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(parsed.imagePrompt.slice(0,500)) + "?width=1080&height=1080&nologo=true";
+        }
         setResultType("image");
 
       } else if (activeTool === "text-video") {
-        raw = await callClaude(SYSTEM, `Generate VIRAL-OPTIMIZED complete video content for ${platformName} ${activeFormat}.
+        raw = await callClaude(SYSTEM, `Generate complete video content for ${platformName} ${activeFormat}.
 Tone: ${tone}
 Brief: ${prompt}
 
 Return JSON only:
 {
-  "videoPrompt": "Ultra-detailed Sora/Runway Gen-3/Pika/Kling AI video generation prompt, 250+ words. Include: exact camera movements (slow zoom, dolly shot, aerial), transitions (whip pan, jump cut, fade), lighting (golden hour, studio, neon), color grading (cinematic LUT, film grain), subject details, background details, motion details, pacing rhythm, visual metaphors",
-  "script": "Complete word-for-word viral script with [SCENE X] markers, exact timestamps, speaker notes, pause indicators, emphasis marks. Include pattern interrupts every 7 seconds.",
+  "videoPrompt": "Cinematic Sora/Runway/Pika prompt, 200+ words with camera movements, transitions, pacing, mood, visual style",
+  "script": "Complete word-for-word script with [SCENE] markers, timestamps, speaker notes",
   "scenes": [
-    {"time":"0:00-0:03","visual":"HOOK scene - pattern interrupt visual","audio":"most shocking/curious opening line","text_overlay":"bold hook text on screen","transition":"hard cut"},
-    {"time":"0:03-0:07","visual":"problem or relatable moment","audio":"agitate the pain point","text_overlay":"relatable text","transition":"quick cut"},
-    {"time":"0:07-0:15","visual":"solution reveal or story build","audio":"main content delivery","text_overlay":"key points","transition":"smooth"},
-    {"time":"0:15-0:25","visual":"proof or demonstration","audio":"supporting evidence","text_overlay":"stats or facts","transition":"dynamic"},
-    {"time":"0:25-0:30","visual":"CTA scene with energy spike","audio":"clear action instruction","text_overlay":"CTA text","transition":"fade out"}
+    {"time":"0:00-0:03","visual":"scene desc","audio":"voiceover text","text_overlay":"on-screen text"},
+    {"time":"0:03-0:08","visual":"scene desc","audio":"voiceover text","text_overlay":"on-screen text"},
+    {"time":"0:08-0:20","visual":"scene desc","audio":"voiceover text","text_overlay":"on-screen text"},
+    {"time":"0:20-0:30","visual":"scene desc","audio":"voiceover text","text_overlay":"on-screen text"}
   ],
-  "hook": "Neurologically-optimised 3-second hook using open loop technique",
-  "hookVariants": ["hook 1 - curiosity", "hook 2 - controversy", "hook 3 - relatability"],
-  "caption": "Viral ${platformName} caption with algorithm-optimised structure",
-  "captionVersions": [
-    {"type":"Short & Punchy","text":"short version"},
-    {"type":"Story Format","text":"longer story version"},
-    {"type":"List Format","text":"numbered list version"}
-  ],
-  "hashtags": {
-    "viral": ["tag1","tag2","tag3","tag4","tag5"],
-    "niche": ["tag1","tag2","tag3","tag4","tag5"],
-    "broad": ["tag1","tag2","tag3","tag4","tag5"]
-  },
-  "duration": "Optimal duration for ${platformName} algorithm boost",
-  "musicMood": "Specific trending music style, BPM range, and emotion",
-  "trendingAudio": "Type of audio currently trending on ${platformName}",
-  "editingStyle": "Exact editing technique with cut frequency, transition types, text animation style",
-  "cta": "Psychology-driven end CTA that maximises follows/saves/shares",
-  "viralityScore": 88,
-  "viralityReason": "Specific reason this will perform well",
-  "algorithmTips": ["tip1","tip2","tip3","tip4","tip5"],
-  "postingStrategy": "Complete 60-minute post-publish engagement strategy",
-  "thumbnailPrompt": "Exact thumbnail image generation prompt for maximum CTR",
-  "chapters": [{"time":"0:00","title":"Hook"},{"time":"0:07","title":"Main Content"},{"time":"0:25","title":"CTA"}],
-  "competitorInsight": "What viral creators do differently in this niche"
-}`, 1800);
+  "hook": "First 3-second hook - the scroll-stopper",
+  "caption": "Platform-native caption",
+  "hashtags": ["h1","h2","h3","h4","h5","h6","h7","h8","h9","h10"],
+  "duration": "Recommended duration",
+  "musicMood": "Describe perfect background music mood/genre",
+  "editingStyle": "Cuts, transitions, pacing description",
+  "cta": "End-screen CTA"
+}`, 1500);
         parsed = JSON.parse(raw);
         setResultType("video");
 
@@ -702,7 +660,7 @@ Return JSON only:
                   </span>
                 </h1>
                 <p style={{ color:COLORS.muted, fontSize:"clamp(15px,2vw,18px)", lineHeight:1.7, marginBottom:36, maxWidth:500 }}>
-                  rasa.ai is the all-in-one AI studio for social media creators. Generate images, videos, captions — publish everywhere. No design skills needed.
+                  rasa.ai is the all-in-one AI studio for social media creators. Generate images, videos, captions - publish everywhere. No design skills needed.
                 </p>
                 <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:40 }}>
                   <button onClick={()=>{setAuthMode("signup");setPage("auth");}} style={{ padding:"15px 32px", borderRadius:12, background:`linear-gradient(90deg,${COLORS.magenta},#7C3AED)`, color:COLORS.white, fontWeight:800, fontSize:16, boxShadow:`0 6px 30px ${COLORS.magenta}44`, letterSpacing:"-0.01em" }}>Start creating free →</button>
@@ -726,12 +684,12 @@ Return JSON only:
           {/* Features */}
           <section style={{ padding:"100px 24px", background:COLORS.surface }}>
             <div style={{ maxWidth:1100, margin:"0 auto" }}>
-              <SectionHead eyebrow="CAPABILITIES" title="Everything a creator needs." sub="From concept to published post — rasa.ai handles image generation, video production, captions, scheduling and publishing across every major platform."/>
+              <SectionHead eyebrow="CAPABILITIES" title="Everything a creator needs." sub="From concept to published post - rasa.ai handles image generation, video production, captions, scheduling and publishing across every major platform."/>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:16 }}>
                 {[
                   { icon:"🎨", title:"Text → Image", desc:"Photorealistic images from a sentence. Optimised for every platform format." },
                   { icon:"🎬", title:"Text → Video", desc:"Turn scripts into cinematic reels, shorts, and YouTube videos automatically." },
-                  { icon:"✨", title:"Image → Video", desc:"Breathe life into your photos — animate them into stunning video content." },
+                  { icon:"✨", title:"Image → Video", desc:"Breathe life into your photos - animate them into stunning video content." },
                   { icon:"🎙️", title:"Audio → Video", desc:"Upload a voiceover or track and get a fully synced visual video." },
                   { icon:"✍️", title:"AI Captions", desc:"3 caption variants per post with full hashtag strategy and optimal posting times." },
                   { icon:"📐", title:"Smart Resize", desc:"One piece of content, reformatted for every platform in seconds." },
@@ -1053,7 +1011,7 @@ Return JSON only:
                       <span style={{ display:"inline-block", width:14, height:14, border:`2px solid ${COLORS.dim}`, borderTopColor:COLORS.muted, borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/>
                       Generating…
                     </span>
-                  ) : `⚡ Generate — 1 credit`}
+                  ) : `⚡ Generate - 1 credit`}
                 </button>
                 <p style={{ color:COLORS.dim, fontSize:11, textAlign:"center", marginTop:8 }}>⌘+Enter to generate · {credits} credits left</p>
 
@@ -1122,152 +1080,112 @@ Return JSON only:
                       </div>
                     </div>
 
-                    // Viral score color
-                    const viralColor = result?.viralityScore >= 80 ? COLORS.green : result?.viralityScore >= 60 ? COLORS.gold : COLORS.red;
-
                     {/* IMAGE RESULT */}
                     {(resultType === "image") && result && (
                       <div style={{ display:"grid", gap:14, gridTemplateColumns:"1fr 1fr" }}>
-
-                        {/* VIRALITY SCORE */}
-                        <div style={{ gridColumn:"1/-1", background:`linear-gradient(135deg,#0D1120,#1A0A2E)`, border:`1px solid ${COLORS.magenta}44`, borderRadius:14, padding:18, display:"flex", alignItems:"center", gap:20 }}>
-                          <div style={{ textAlign:"center", flexShrink:0 }}>
-                            <div style={{ width:80,height:80,borderRadius:"50%",background:`conic-gradient(${viralColor} ${(result.viralityScore||75)*3.6}deg, ${COLORS.border} 0deg)`, display:"flex",alignItems:"center",justifyContent:"center", position:"relative" }}>
-                              <div style={{ width:60,height:60,borderRadius:"50%",background:COLORS.surface,display:"flex",alignItems:"center",justifyContent:"center" }}>
-                                <span style={{ color:viralColor,fontWeight:800,fontSize:18 }}>{result.viralityScore||75}%</span>
-                              </div>
-                            </div>
-                            <p style={{ color:COLORS.muted,fontSize:10,marginTop:6,fontWeight:700 }}>VIRAL SCORE</p>
-                          </div>
-                          <div style={{ flex:1 }}>
-                            <p style={{ color:COLORS.white,fontWeight:700,fontSize:14,marginBottom:6 }}>🔥 Viral Potential Analysis</p>
-                            <p style={{ color:COLORS.muted,fontSize:13,lineHeight:1.6 }}>{result.viralityReason}</p>
-                            {result.competitorInsight && <p style={{ color:COLORS.cyan,fontSize:12,marginTop:8,fontStyle:"italic" }}>💡 {result.competitorInsight}</p>}
-                          </div>
-                        </div>
-
-                        {/* REAL GENERATED IMAGE */}
-                        {result.imageUrl && (
-                          <div style={{ gridColumn:"1/-1", background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:14, padding:18 }}>
-                            <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:12 }}>🖼️ GENERATED IMAGE</p>
-                            <img
-                              src={result.imageUrl}
-                              alt="AI Generated"
-                              style={{ width:"100%", borderRadius:12, maxHeight:500, objectFit:"cover", display:"block" }}
-                              onError={e=>{ e.target.style.display="none"; }}
-                            />
-                            <div style={{ display:"flex", gap:8, marginTop:12 }}>
-                              <a href={result.imageUrl} download="rasa-ai-image.jpg" target="_blank" style={{ padding:"10px 20px",borderRadius:10,background:`linear-gradient(90deg,${COLORS.magenta},#7C3AED)`,color:COLORS.white,fontWeight:700,fontSize:13,textDecoration:"none",display:"inline-block" }}>
-                                ⬇️ Download Image
-                              </a>
-                              <button onClick={()=>copyText("imgurl",result.imageUrl)} style={{ padding:"10px 16px",borderRadius:10,background:COLORS.surface,border:`1px solid ${COLORS.border}`,color:COLORS.muted,fontWeight:600,fontSize:13 }}>
-                                {copied.imgurl?"✓ Copied":"🔗 Copy URL"}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
                         {/* Image prompt */}
                         <div style={{ gridColumn:"1/-1", background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:14, padding:18 }}>
                           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                            <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em" }}>🎨 AI IMAGE PROMPT (for Midjourney/DALL-E)</p>
+                            <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em" }}>🎨 AI IMAGE PROMPT</p>
                             <button onClick={()=>copyText("imgp",result.imagePrompt)} style={{ padding:"4px 10px",borderRadius:6,background: copied.imgp?`${COLORS.green}22`:COLORS.surface,border:`1px solid ${copied.imgp?COLORS.green:COLORS.border}`,color: copied.imgp?COLORS.green:COLORS.muted,fontSize:11,fontWeight:600 }}>{copied.imgp?"✓ Copied":"Copy"}</button>
                           </div>
                           <p style={{ color:COLORS.white, fontSize:13, lineHeight:1.7 }}>{result.imagePrompt}</p>
-                          {result.negativePrompt && <p style={{ color:COLORS.dim, fontSize:12, marginTop:10, fontStyle:"italic" }}>❌ Negative: {result.negativePrompt}</p>}
+                          {result.negativePrompt && <p style={{ color:COLORS.dim, fontSize:12, marginTop:10, fontStyle:"italic" }}>Negative: {result.negativePrompt}</p>}
                           {result.contentStyle && <div style={{ display:"flex", gap:8, marginTop:12, flexWrap:"wrap" }}>
                             {result.colorPalette?.map(c=><div key={c} style={{ width:24,height:24,borderRadius:6,background:c,border:`1px solid ${COLORS.border}` }} title={c}/>)}
                             <span style={{ color:COLORS.muted, fontSize:12, alignSelf:"center" }}>{result.contentStyle}</span>
                           </div>}
                         </div>
-                        {/* Caption */}
-                        <div style={{ background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:14, padding:18 }}>
-                          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:10 }}>
-                            <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em" }}>✍️ CAPTION</p>
-                            <button onClick={()=>copyText("cap2",result.caption)} style={{ padding:"4px 10px",borderRadius:6,background: copied.cap2?`${COLORS.green}22`:COLORS.surface,border:`1px solid ${copied.cap2?COLORS.green:COLORS.border}`,color: copied.cap2?COLORS.green:COLORS.muted,fontSize:11,fontWeight:600 }}>{copied.cap2?"✓":"Copy"}</button>
-                          </div>
-                          {editMode ? (
-                            <textarea value={editedCaption} onChange={e=>{setEditedCaption(e.target.value);setResult(r=>({...r,caption:e.target.value}));}} style={{ width:"100%", minHeight:100, fontSize:13, lineHeight:1.6, resize:"vertical" }}/>
-                          ) : (
-                            <p style={{ color:COLORS.white, fontSize:13, lineHeight:1.7 }}>{result.caption}</p>
-                          )}
-                        </div>
-                        {/* Hook */}
-                        <div style={{ background:`${COLORS.gold}0D`, border:`1px solid ${COLORS.gold}44`, borderRadius:14, padding:18 }}>
-                          <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:10 }}>⚡ HOOK — FIRST 3 SECONDS</p>
-                          <p style={{ color:COLORS.goldLight, fontWeight:700, fontSize:15, lineHeight:1.5 }}>"{result.hook}"</p>
-                          <p style={{ color:COLORS.muted, fontSize:12, marginTop:10 }}>CTA: <span style={{ color:COLORS.cyan }}>{result.cta}</span></p>
-                          <p style={{ color:COLORS.muted, fontSize:12, marginTop:6 }}>Best time: <span style={{ color:COLORS.white }}>{result.bestTime}</span></p>
-                        </div>
-                        {/* Caption Versions */}
-                        {result.captionVersions && (
-                          <div style={{ gridColumn:"1/-1", background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:14, padding:18 }}>
-                            <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:12 }}>✍️ 3 CAPTION VERSIONS</p>
-                            {result.captionVersions.map((cv,i)=>(
-                              <div key={i} style={{ background:COLORS.surface, borderRadius:10, padding:"12px 14px", marginBottom:8, borderLeft:`3px solid ${i===0?COLORS.magenta:i===1?COLORS.cyan:COLORS.gold}` }}>
-                                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                                  <span style={{ color:i===0?COLORS.magenta:i===1?COLORS.cyan:COLORS.gold, fontSize:11, fontWeight:700 }}>{cv.type}</span>
-                                  <button onClick={()=>copyText(`cv${i}`,cv.text)} style={{ padding:"3px 8px",borderRadius:6,background:copied[`cv${i}`]?`${COLORS.green}22`:COLORS.card,border:`1px solid ${copied[`cv${i}`]?COLORS.green:COLORS.border}`,color:copied[`cv${i}`]?COLORS.green:COLORS.muted,fontSize:10,fontWeight:600 }}>{copied[`cv${i}`]?"✓":"Copy"}</button>
-                                </div>
-                                <p style={{ color:COLORS.white, fontSize:13, lineHeight:1.6 }}>{cv.text}</p>
+                        {/* VIRAL SCORE */}
+                        {result.viralityScore && (
+                          <div style={{ gridColumn:"1/-1", background:"#1A0A2E", border:"1px solid #D946EF44", borderRadius:14, padding:18, display:"flex", alignItems:"center", gap:20 }}>
+                            <div style={{ width:80, height:80, borderRadius:"50%", border:"4px solid " + (result.viralityScore>=80?COLORS.green:result.viralityScore>=60?COLORS.gold:COLORS.red), display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                              <div style={{ textAlign:"center" }}>
+                                <div style={{ color:result.viralityScore>=80?COLORS.green:result.viralityScore>=60?COLORS.gold:COLORS.red, fontWeight:800, fontSize:20 }}>{result.viralityScore}%</div>
+                                <div style={{ color:COLORS.muted, fontSize:8, fontWeight:700 }}>VIRAL</div>
                               </div>
-                            ))}
+                            </div>
+                            <div>
+                              <p style={{ color:COLORS.white, fontWeight:700, fontSize:14, marginBottom:4 }}>Viral Potential Analysis</p>
+                              <p style={{ color:COLORS.muted, fontSize:13, lineHeight:1.5 }}>{result.viralityReason}</p>
+                              {result.competitorInsight && <p style={{ color:COLORS.cyan, fontSize:12, marginTop:6, fontStyle:"italic" }}>Insight: {result.competitorInsight}</p>}
+                            </div>
                           </div>
                         )}
 
-                        {/* Hashtags */}
-                        <div style={{ gridColumn:"1/-1", background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:14, padding:18 }}>
-                          <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:12 }}># HASHTAG STRATEGY</p>
-                          {result.hashtags && typeof result.hashtags === "object" && !Array.isArray(result.hashtags) ? (
-                            Object.entries(result.hashtags).map(([group, tags])=>(
-                              <div key={group} style={{ marginBottom:12 }}>
-                                <p style={{ color:COLORS.muted, fontSize:10, fontWeight:700, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.08em" }}>{group} hashtags</p>
-                                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                                  {tags?.map(h=>(
-                                    <span key={h} onClick={()=>copyText(`h${h}`,`#${h.replace(/^#/,"")}`)} style={{ background:`${COLORS.magenta}15`, border:`1px solid ${COLORS.magenta}33`, borderRadius:999, padding:"4px 10px", color:COLORS.magenta, fontSize:12, fontWeight:600, cursor:"pointer" }}>
-                                      #{h.replace(/^#/,"")}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                              {(Array.isArray(result.hashtags)?result.hashtags:[]).map(h=>(
-                                <span key={h} onClick={()=>copyText(`h${h}`,`#${h.replace(/^#/,"")}`)} style={{ background:`${COLORS.magenta}15`, border:`1px solid ${COLORS.magenta}33`, borderRadius:999, padding:"4px 10px", color:COLORS.magenta, fontSize:12, fontWeight:600, cursor:"pointer" }}>
-                                  #{h.replace(/^#/,"")}
-                                </span>
-                              ))}
+                        {/* REAL IMAGE */}
+                        {result.imageUrl && (
+                          <div style={{ gridColumn:"1/-1", background:COLORS.card, border:"1px solid " + COLORS.border, borderRadius:14, padding:18 }}>
+                            <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:12 }}>Generated Image</p>
+                            <img src={result.imageUrl} alt="AI Generated" style={{ width:"100%", borderRadius:12, maxHeight:480, objectFit:"cover", display:"block" }} onError={function(e){e.target.style.display="none"}}/>
+                            <div style={{ marginTop:10, display:"flex", gap:8 }}>
+                              <a href={result.imageUrl} target="_blank" rel="noreferrer" download="rasa-image.jpg" style={{ padding:"10px 20px", borderRadius:10, background:"linear-gradient(90deg,#D946EF,#7C3AED)", color:"#fff", fontWeight:700, fontSize:13, textDecoration:"none", display:"inline-block" }}>Download Image</a>
+                              <button onClick={function(){copyText("imgp2", result.imagePrompt)}} style={{ padding:"10px 16px", borderRadius:10, background:COLORS.surface, border:"1px solid " + COLORS.border, color:copied.imgp2?COLORS.green:COLORS.muted, fontWeight:600, fontSize:13 }}>{copied.imgp2?"Copied":"Copy Prompt"}</button>
                             </div>
-                          )}
-                          <button onClick={()=>{
-                            const tags = Array.isArray(result.hashtags) ? result.hashtags : Object.values(result.hashtags||{}).flat();
-                            copyText("hash", tags.map(h=>`#${h.replace(/^#/,"")}`).join(" "));
-                          }} style={{ marginTop:10, padding:"6px 14px",borderRadius:8,background:copied.hash?`${COLORS.green}22`:COLORS.surface,border:`1px solid ${copied.hash?COLORS.green:COLORS.border}`,color:copied.hash?COLORS.green:COLORS.muted,fontSize:12,fontWeight:600 }}>
-                            {copied.hash?"✓ Copied all":"Copy all hashtags"}
-                          </button>
+                          </div>
+                        )}
+
+                        {/* Caption */}
+                        <div style={{ background:COLORS.card, border:"1px solid " + COLORS.border, borderRadius:14, padding:18 }}>
+                          <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:10 }}>3 CAPTION OPTIONS</p>
+                          {[{t:result.caption,l:"Option 1",c:COLORS.magenta},{t:result.captionV2,l:"Option 2",c:COLORS.cyan},{t:result.captionV3,l:"Option 3",c:COLORS.gold}].filter(function(x){return x.t}).map(function(x,i){return (
+                            <div key={i} style={{ background:COLORS.surface, borderRadius:10, padding:"10px 14px", marginBottom:8, borderLeft:"3px solid " + x.c }}>
+                              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                                <span style={{ color:x.c, fontSize:11, fontWeight:700 }}>{x.l}</span>
+                                <button onClick={function(){copyText("cap"+i, x.t)}} style={{ padding:"3px 8px", borderRadius:6, background:copied["cap"+i]?"#10B98122":COLORS.card, border:"1px solid " + (copied["cap"+i]?COLORS.green:COLORS.border), color:copied["cap"+i]?COLORS.green:COLORS.muted, fontSize:10 }}>{copied["cap"+i]?"Copied":"Copy"}</button>
+                              </div>
+                              <p style={{ color:COLORS.white, fontSize:13, lineHeight:1.6 }}>{x.t}</p>
+                            </div>
+                          )})}
+                        </div>
+
+                        {/* Hook */}
+                        <div style={{ background:"#F59E0B0D", border:"1px solid #F59E0B44", borderRadius:14, padding:18 }}>
+                          <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:10 }}>3 VIRAL HOOKS</p>
+                          {[result.hook, result.hookV2, result.hookV3].filter(Boolean).map(function(h,i){return (
+                            <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", background:COLORS.surface, borderRadius:8, padding:"8px 12px", marginBottom:6 }}>
+                              <p style={{ color:"#FCD34D", fontSize:13, fontWeight:600, flex:1 }}>"{h}"</p>
+                              <button onClick={function(){copyText("hk"+i, h)}} style={{ padding:"3px 8px", borderRadius:6, background:copied["hk"+i]?"#10B98122":COLORS.card, border:"1px solid " + (copied["hk"+i]?COLORS.green:COLORS.border), color:copied["hk"+i]?COLORS.green:COLORS.muted, fontSize:10, marginLeft:8 }}>{copied["hk"+i]?"Copied":"Copy"}</button>
+                            </div>
+                          )})}
+                          <p style={{ color:COLORS.muted, fontSize:12, marginTop:8 }}>CTA: <span style={{ color:COLORS.cyan }}>{result.cta}</span></p>
+                          <p style={{ color:COLORS.muted, fontSize:12, marginTop:4 }}>Best time: <span style={{ color:COLORS.white }}>{result.bestTime}</span></p>
                         </div>
 
                         {/* Algorithm Tips */}
-                        {result.algorithmTips && (
-                          <div style={{ gridColumn:"1/-1", background:`${COLORS.cyan}08`, border:`1px solid ${COLORS.cyan}33`, borderRadius:14, padding:18 }}>
-                            <p style={{ color:COLORS.cyan, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:12 }}>🤖 ALGORITHM TIPS FOR {activePlatform.toUpperCase()}</p>
-                            {result.algorithmTips.map((t,i)=>(
-                              <div key={i} style={{ display:"flex", gap:10, marginBottom:8 }}>
+                        {result.algorithmTip1 && (
+                          <div style={{ background:"#22D3EE08", border:"1px solid #22D3EE33", borderRadius:14, padding:18 }}>
+                            <p style={{ color:COLORS.cyan, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:12 }}>ALGORITHM TIPS</p>
+                            {[result.algorithmTip1, result.algorithmTip2, result.algorithmTip3, result.algorithmTip4, result.algorithmTip5].filter(Boolean).map(function(t,i){return (
+                              <div key={i} style={{ display:"flex", gap:8, marginBottom:8 }}>
                                 <span style={{ color:COLORS.cyan, fontWeight:800, fontSize:13, flexShrink:0 }}>{i+1}.</span>
                                 <span style={{ color:COLORS.white, fontSize:13, lineHeight:1.5 }}>{t}</span>
                               </div>
-                            ))}
+                            )})}
                           </div>
                         )}
 
-                        {/* Posting Strategy */}
+                        {/* 60 min strategy */}
                         {result.postingStrategy && (
-                          <div style={{ gridColumn:"1/-1", background:`${COLORS.gold}08`, border:`1px solid ${COLORS.gold}33`, borderRadius:14, padding:18 }}>
-                            <p style={{ color:COLORS.gold, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:10 }}>⏰ 60-MINUTE POST STRATEGY</p>
+                          <div style={{ background:"#F59E0B08", border:"1px solid #F59E0B33", borderRadius:14, padding:18 }}>
+                            <p style={{ color:COLORS.gold, fontSize:11, fontWeight:700, letterSpacing:"0.1em", marginBottom:10 }}>60-MINUTE VIRAL STRATEGY</p>
                             <p style={{ color:COLORS.white, fontSize:13, lineHeight:1.7 }}>{result.postingStrategy}</p>
                           </div>
                         )}
+                        {/* Hashtags */}
+                        <div style={{ gridColumn:"1/-1", background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:14, padding:18 }}>
+                          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:10 }}>
+                            <p style={{ color:COLORS.muted, fontSize:11, fontWeight:700, letterSpacing:"0.1em" }}># HASHTAGS ({result.hashtags?.length})</p>
+                            <button onClick={()=>copyText("hash",result.hashtags?.map(h=>`#${h.replace(/^#/,"")}`).join(" "))} style={{ padding:"4px 10px",borderRadius:6,background: copied.hash?`${COLORS.green}22`:COLORS.surface,border:`1px solid ${copied.hash?COLORS.green:COLORS.border}`,color: copied.hash?COLORS.green:COLORS.muted,fontSize:11,fontWeight:600 }}>{copied.hash?"✓ Copied":"Copy all"}</button>
+                          </div>
+                          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                            {result.hashtags?.map(h=>(
+                              <span key={h} onClick={()=>copyText(`h${h}`,`#${h.replace(/^#/,"")}`)} style={{ background:`${COLORS.magenta}15`, border:`1px solid ${COLORS.magenta}33`, borderRadius:999, padding:"4px 10px", color:COLORS.magenta, fontSize:12, fontWeight:600, cursor:"pointer", transition:"all 0.15s" }}>
+                                #{h.replace(/^#/,"")}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                         {/* Tips */}
                         {result.engagementTips && (
                           <div style={{ gridColumn:"1/-1", background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:14, padding:18 }}>
@@ -1516,7 +1434,7 @@ Return JSON only:
                     <div key={h.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 22px", borderBottom:`1px solid ${COLORS.border}`, cursor:"pointer" }} onClick={()=>{setResult(h.result);setResultType(h.type);setActiveTool(h.tool);setPrompt(h.prompt);setPage("studio");}}>
                       <div style={{ width:36,height:36,borderRadius:10,background:`${COLORS.magenta}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0 }}>{tool?.icon}</div>
                       <div style={{ flex:1, minWidth:0 }}>
-                        <p style={{ color:COLORS.white, fontWeight:600, fontSize:13, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{h.prompt || `${tool?.label} — ${h.format}`}</p>
+                        <p style={{ color:COLORS.white, fontWeight:600, fontSize:13, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{h.prompt || `${tool?.label} - ${h.format}`}</p>
                         <p style={{ color:COLORS.muted, fontSize:12 }}>{tool?.label} · {p?.name} · {h.format}</p>
                       </div>
                       <p style={{ color:COLORS.dim, fontSize:11, flexShrink:0 }}>{new Date(h.id).toLocaleDateString()}</p>
