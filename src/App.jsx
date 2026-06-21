@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-/* ═══════════════════════════════════════════════════════════════
+/* ===============================================================
    RASA.AI - Complete Social Media Influencer Platform
    Design: Deep obsidian + electric magenta + liquid gold
    Signature: Morphing orb hero that reacts to user interaction
-═══════════════════════════════════════════════════════════════ */
+=============================================================== */
 
-// ── Constants ──────────────────────────────────────────────────
+// -- Constants --------------------------------------------------
 const COLORS = {
   bg: "#07080F",
   surface: "#0E1120",
@@ -58,10 +58,10 @@ const PLATFORMS = [
 ];
 
 const STUDIO_TOOLS = [
-  { id: "text-image",   label: "Text → Image",   icon: "🎨", desc: "Describe any visual, get photorealistic results" },
-  { id: "text-video",   label: "Text → Video",   icon: "🎬", desc: "Turn scripts into cinematic video content" },
-  { id: "image-video",  label: "Image → Video",  icon: "✨", desc: "Animate your photos into dynamic videos" },
-  { id: "audio-video",  label: "Audio → Video",  icon: "🎙️", desc: "Generate video from voiceover or music" },
+  { id: "text-image",   label: "Text to Image",   icon: "🎨", desc: "Describe any visual, get photorealistic results" },
+  { id: "text-video",   label: "Text to Video",   icon: "🎬", desc: "Turn scripts into cinematic video content" },
+  { id: "image-video",  label: "Image to Video",  icon: "✨", desc: "Animate your photos into dynamic videos" },
+  { id: "audio-video",  label: "Audio to Video",  icon: "🎙️", desc: "Generate video from voiceover or music" },
   { id: "caption",      label: "AI Caption",     icon: "✍️", desc: "Platform-perfect captions with hashtags" },
   { id: "resize",       label: "Smart Resize",   icon: "📐", desc: "Reformat any content for every platform" },
 ];
@@ -77,7 +77,7 @@ const FORMATS = {
 
 const TONES = ["Viral & Trendy","Luxe & Premium","Funny & Relatable","Educational","Inspirational","Edgy & Bold","Minimalist","Storytelling"];
 
-// ── Utility ────────────────────────────────────────────────────
+// -- Utility ----------------------------------------------------
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function useTypewriter(text, speed = 18, active = true) {
@@ -96,7 +96,7 @@ function useTypewriter(text, speed = 18, active = true) {
   return displayed;
 }
 
-// ── Claude API call ────────────────────────────────────────────
+// -- Claude API call --------------------------------------------
 async function callClaude(systemPrompt, userPrompt, maxTokens = 1200) {
   const res = await fetch("/api/claude", {
     method: "POST",
@@ -113,7 +113,7 @@ async function callClaude(systemPrompt, userPrompt, maxTokens = 1200) {
   return data.content?.map(b => b.text || "").join("").replace(/```json\n?|```/g, "").trim();
 }
 
-// ── SVG Logo ───────────────────────────────────────────────────
+// -- SVG Logo ---------------------------------------------------
 function RasaLogo({ size = 32 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
@@ -131,7 +131,7 @@ function RasaLogo({ size = 32 }) {
   );
 }
 
-// ── Animated Orb ───────────────────────────────────────────────
+// -- Animated Orb -----------------------------------------------
 function MorphOrb({ size = 320, interactive = true }) {
   const [pos, setPos] = useState({ x: 0.5, y: 0.5 });
   const ref = useRef();
@@ -190,7 +190,7 @@ function MorphOrb({ size = 320, interactive = true }) {
   );
 }
 
-// ── Toast ──────────────────────────────────────────────────────
+// -- Toast ------------------------------------------------------
 function Toast({ msg, type="success", onDone }) {
   useEffect(() => { const t = setTimeout(onDone, 3200); return ()=>clearTimeout(t); }, []);
   return (
@@ -209,7 +209,7 @@ function Toast({ msg, type="success", onDone }) {
   );
 }
 
-// ── Section heading ────────────────────────────────────────────
+// -- Section heading --------------------------------------------
 function SectionHead({ eyebrow, title, sub, center=true }) {
   return (
     <div style={{ textAlign: center?"center":"left", marginBottom: 56 }}>
@@ -233,7 +233,7 @@ function SectionHead({ eyebrow, title, sub, center=true }) {
   );
 }
 
-// ── Pricing card ───────────────────────────────────────────────
+// -- Pricing card -----------------------------------------------
 function PricingCard({ plan, yearly, onSelect, active }) {
   const price = yearly ? plan.priceYear : plan.price;
   return (
@@ -292,7 +292,7 @@ function PricingCard({ plan, yearly, onSelect, active }) {
   );
 }
 
-// ── Studio Tool Card ───────────────────────────────────────────
+// -- Studio Tool Card -------------------------------------------
 function ToolCard({ tool, active, onClick }) {
   return (
     <button onClick={()=>onClick(tool.id)} style={{
@@ -309,9 +309,9 @@ function ToolCard({ tool, active, onClick }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════
+// ==============================================================
 // MAIN APP
-// ══════════════════════════════════════════════════════════════
+// ==============================================================
 export default function RasaAI() {
   // Global state
   const [page, setPage] = useState("landing"); // landing | studio | pricing | dashboard
@@ -351,7 +351,7 @@ export default function RasaAI() {
 
   const showToast = useCallback((msg, type="success") => setToast({msg,type}), []);
 
-  // ── Auth ─────────────────────────────────────────────────────
+  // -- Auth -----------------------------------------------------
   const handleAuth = useCallback((e) => {
     e?.preventDefault?.();
     if (!authEmail || !authPass) return showToast("Fill in all fields","error");
@@ -361,7 +361,7 @@ export default function RasaAI() {
     else { setPage("studio"); showToast(`Welcome back, ${u.name}!`); }
   }, [authEmail, authPass, authName, plan]);
 
-  // ── Generate ─────────────────────────────────────────────────
+  // -- Generate -------------------------------------------------
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() && activeTool !== "image-video" && activeTool !== "audio-video") {
       return showToast("Add a description first", "error");
@@ -577,9 +577,9 @@ Return JSON only:
     showToast("Content package downloaded!");
   }, [result, activeTool]);
 
-  // ════════════════════════════════════════
+  // ========================================
   // RENDER
-  // ════════════════════════════════════════
+  // ========================================
   return (
     <div style={{ minHeight:"100vh", background:COLORS.bg, color:COLORS.white, fontFamily:"'Inter',system-ui,sans-serif", overflowX:"hidden" }}>
       <style>{`
@@ -601,7 +601,7 @@ Return JSON only:
         a { color:inherit; text-decoration:none; }
       `}</style>
 
-      {/* ── NAVBAR ── */}
+      {/* -- NAVBAR -- */}
       <nav style={{
         position:"sticky", top:0, zIndex:100,
         background:`${COLORS.bg}ee`, backdropFilter:"blur(20px)",
@@ -638,7 +638,7 @@ Return JSON only:
         </div>
       </nav>
 
-      {/* ══════════════════════════ LANDING PAGE ══════════════════════════ */}
+      {/* ========================== LANDING PAGE ========================== */}
       {page === "landing" && (
         <div>
           {/* Hero */}
@@ -687,10 +687,10 @@ Return JSON only:
               <SectionHead eyebrow="CAPABILITIES" title="Everything a creator needs." sub="From concept to published post - rasa.ai handles image generation, video production, captions, scheduling and publishing across every major platform."/>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:16 }}>
                 {[
-                  { icon:"🎨", title:"Text → Image", desc:"Photorealistic images from a sentence. Optimised for every platform format." },
-                  { icon:"🎬", title:"Text → Video", desc:"Turn scripts into cinematic reels, shorts, and YouTube videos automatically." },
-                  { icon:"✨", title:"Image → Video", desc:"Breathe life into your photos - animate them into stunning video content." },
-                  { icon:"🎙️", title:"Audio → Video", desc:"Upload a voiceover or track and get a fully synced visual video." },
+                  { icon:"🎨", title:"Text to Image", desc:"Photorealistic images from a sentence. Optimised for every platform format." },
+                  { icon:"🎬", title:"Text to Video", desc:"Turn scripts into cinematic reels, shorts, and YouTube videos automatically." },
+                  { icon:"✨", title:"Image to Video", desc:"Breathe life into your photos - animate them into stunning video content." },
+                  { icon:"🎙️", title:"Audio to Video", desc:"Upload a voiceover or track and get a fully synced visual video." },
                   { icon:"✍️", title:"AI Captions", desc:"3 caption variants per post with full hashtag strategy and optimal posting times." },
                   { icon:"📐", title:"Smart Resize", desc:"One piece of content, reformatted for every platform in seconds." },
                   { icon:"🚀", title:"Direct Publish", desc:"Publish to Instagram, YouTube, TikTok, Facebook, Twitter and LinkedIn without leaving rasa.ai." },
@@ -783,7 +783,7 @@ Return JSON only:
         </div>
       )}
 
-      {/* ══════════════════════════ AUTH PAGE ══════════════════════════ */}
+      {/* ========================== AUTH PAGE ========================== */}
       {page === "auth" && (
         <div style={{ minHeight:"calc(100vh - 64px)", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
           <div style={{ width:"100%", maxWidth:420, animation:"fadeUp 0.4s ease" }}>
@@ -809,7 +809,7 @@ Return JSON only:
               </div>
               <div style={{ marginBottom:22 }}>
                 <label style={{ color:COLORS.muted, fontSize:12, fontWeight:600, display:"block", marginBottom:6 }}>PASSWORD</label>
-                <input type="password" value={authPass} onChange={e=>setAuthPass(e.target.value)} placeholder="••••••••" onKeyDown={e=>e.key==="Enter"&&handleAuth()} />
+                <input type="password" value={authPass} onChange={e=>setAuthPass(e.target.value)} placeholder="********" onKeyDown={e=>e.key==="Enter"&&handleAuth()} />
               </div>
               <button onClick={handleAuth} style={{ width:"100%", padding:"14px 0", borderRadius:12, background:`linear-gradient(90deg,${COLORS.magenta},#7C3AED)`, color:COLORS.white, fontWeight:800, fontSize:15, boxShadow:`0 4px 20px ${COLORS.magenta}44` }}>
                 {authMode === "signup" ? "Create account →" : "Sign in →"}
@@ -832,7 +832,7 @@ Return JSON only:
         </div>
       )}
 
-      {/* ══════════════════════════ PRICING PAGE ══════════════════════════ */}
+      {/* ========================== PRICING PAGE ========================== */}
       {page === "pricing" && (
         <div style={{ padding:"80px 24px 100px" }}>
           <div style={{ maxWidth:1100, margin:"0 auto" }}>
@@ -860,7 +860,7 @@ Return JSON only:
         </div>
       )}
 
-      {/* ══════════════════════════ STUDIO PAGE ══════════════════════════ */}
+      {/* ========================== STUDIO PAGE ========================== */}
       {page === "studio" && user && (
         <div style={{ display:"flex", height:"calc(100vh - 64px)", overflow:"hidden" }}>
           {/* Left sidebar */}
@@ -892,7 +892,7 @@ Return JSON only:
                 {history.slice(0,5).map(h=>(
                   <button key={h.id} onClick={()=>{setResult(h.result);setResultType(h.type);setActiveTool(h.tool);setPrompt(h.prompt);}} style={{ width:"100%", padding:"8px 12px", borderRadius:8, marginBottom:3, background:"transparent", color:COLORS.muted, fontSize:11, textAlign:"left", lineHeight:1.4, border:"none" }}>
                     <span style={{marginRight:6}}>{STUDIO_TOOLS.find(t=>t.id===h.tool)?.icon||"✨"}</span>
-                    {h.prompt.slice(0,32)}{h.prompt.length>32?"…":""}
+                    {h.prompt.slice(0,32)}{h.prompt.length>32?"...":""}
                   </button>
                 ))}
               </>
@@ -1009,7 +1009,7 @@ Return JSON only:
                   {generating ? (
                     <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
                       <span style={{ display:"inline-block", width:14, height:14, border:`2px solid ${COLORS.dim}`, borderTopColor:COLORS.muted, borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/>
-                      Generating…
+                      Generating...
                     </span>
                   ) : `⚡ Generate - 1 credit`}
                 </button>
@@ -1040,7 +1040,7 @@ Return JSON only:
                 {generating && (
                   <div style={{ height:"100%", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:20 }}>
                     <MorphOrb size={180} interactive={false}/>
-                    <p style={{ color:COLORS.muted, fontSize:14 }}>rasa.ai is crafting your content…</p>
+                    <p style={{ color:COLORS.muted, fontSize:14 }}>rasa.ai is crafting your content...</p>
                     <div style={{ display:"flex", gap:6 }}>
                       {[0,0.15,0.3].map((d,i)=>(
                         <div key={i} style={{ width:8,height:8,borderRadius:"50%",background:COLORS.magenta,animation:`pulse 1s ${d}s ease-in-out infinite` }}/>
@@ -1073,7 +1073,7 @@ Return JSON only:
                           return (
                             <button key={p.id} onClick={()=>handlePublish(p.id)} disabled={st==="done"} style={{ display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:8,border:"none",background: st==="done"?`${COLORS.green}22`:st==="publishing"?COLORS.surface:`${p.color}22`,color: st==="done"?COLORS.green:st==="publishing"?COLORS.muted:p.color,fontWeight:600,fontSize:12,transition:"all 0.2s" }}>
                               {st==="publishing" ? <span style={{display:"inline-block",width:10,height:10,border:`2px solid ${COLORS.dim}`,borderTopColor:COLORS.muted,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/> : p.icon}
-                              {st==="done" ? "Published" : st==="publishing" ? "Publishing…" : p.name}
+                              {st==="done" ? "Published" : st==="publishing" ? "Publishing..." : p.name}
                             </button>
                           );
                         })}
@@ -1367,7 +1367,7 @@ Return JSON only:
         </div>
       )}
 
-      {/* ══════════════════════════ DASHBOARD ══════════════════════════ */}
+      {/* ========================== DASHBOARD ========================== */}
       {page === "dashboard" && user && (
         <div style={{ maxWidth:1100, margin:"0 auto", padding:"40px 24px" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:32, flexWrap:"wrap", gap:16 }}>
@@ -1448,7 +1448,7 @@ Return JSON only:
         </div>
       )}
 
-      {/* ── Studio gated if no user ── */}
+      {/* -- Studio gated if no user -- */}
       {page === "studio" && !user && (
         <div style={{ minHeight:"calc(100vh - 64px)", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
           <div style={{ textAlign:"center" }}>
