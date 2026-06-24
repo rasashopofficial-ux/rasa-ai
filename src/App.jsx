@@ -106,6 +106,187 @@ function ScoreRing({ score }) {
         <div style={{ color, fontWeight: 800, fontSize: 20 }}>{score}%</div>
         <div style={{ color: C.muted, fontSize: 8, fontWeight: 700 }}>VIRAL</div>
       </div>
+      {/* ══ ADMIN PANEL ══ */}
+      {page === "admin" && user?.isAdmin && (
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 24px" }}>
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32, flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <div style={{ background: C.green + "22", border: "1px solid " + C.green + "44", borderRadius: 8, padding: "4px 12px" }}>
+                  <span style={{ color: C.green, fontSize: 11, fontWeight: 800 }}>⚙️ ADMIN PANEL</span>
+                </div>
+              </div>
+              <h1 style={{ fontSize: 28, fontWeight: 900, letterSpacing: -0.5 }}>rasaaistudio.com</h1>
+              <p style={{ color: C.muted, fontSize: 14 }}>Welcome, {user.name} — Full Admin Access</p>
+            </div>
+            <button onClick={() => setPage("studio")} style={{ padding: "10px 20px", borderRadius: 10, background: "linear-gradient(90deg,#D946EF,#7C3AED)", border: "none", color: C.white, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Go to Studio</button>
+          </div>
+
+          {/* Stats Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 14, marginBottom: 28 }}>
+            {[
+              { label: "Total Users", val: "1,247", change: "+23 today", color: C.pink },
+              { label: "Active Subscriptions", val: "89", change: "+5 this week", color: C.cyan },
+              { label: "Revenue (MTD)", val: "₹44,311", change: "+₹2,400 today", color: C.green },
+              { label: "Free Users", val: "1,158", change: "Conversion: 7.2%", color: C.gold },
+              { label: "Credits Used", val: "28,450", change: "This month", color: "#a855f7" },
+              { label: "Churn Rate", val: "3.2%", change: "↓ 0.5% vs last month", color: C.green },
+            ].map(s => (
+              <div key={s.label} style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 14, padding: "18px 16px" }}>
+                <p style={{ color: C.muted, fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</p>
+                <p style={{ color: s.color, fontSize: 26, fontWeight: 900, marginBottom: 4, letterSpacing: -0.5 }}>{s.val}</p>
+                <p style={{ color: C.dim, fontSize: 11 }}>{s.change}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+
+            {/* Subscription Plans Performance */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>📊 Subscription Performance</p>
+              {[
+                { name: "Starter ₹199", users: 34, revenue: "₹6,766", color: "#a855f7", pct: 38 },
+                { name: "Creator ₹499", users: 41, revenue: "₹20,459", color: C.pink, pct: 46 },
+                { name: "Pro ₹999", users: 14, revenue: "₹13,986", color: C.cyan, pct: 16 },
+                { name: "Impulse ₹119", users: 67, revenue: "₹7,973", color: C.gold, pct: 75 },
+              ].map(p => (
+                <div key={p.name} style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                    <span style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{p.name}</span>
+                    <div style={{ display: "flex", gap: 12 }}>
+                      <span style={{ color: C.muted, fontSize: 12 }}>{p.users} users</span>
+                      <span style={{ color: C.green, fontSize: 12, fontWeight: 700 }}>{p.revenue}</span>
+                    </div>
+                  </div>
+                  <div style={{ height: 6, background: C.border, borderRadius: 3 }}>
+                    <div style={{ height: "100%", background: p.color, borderRadius: 3, width: p.pct + "%" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Sales Report */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>💰 Sales Report</p>
+              {[
+                { period: "Today", amount: "₹2,418", txns: 8, color: C.green },
+                { period: "This Week", amount: "₹11,234", txns: 43, color: C.cyan },
+                { period: "This Month", amount: "₹44,311", txns: 156, color: C.pink },
+                { period: "Last Month", amount: "₹38,920", txns: 134, color: C.muted },
+                { period: "Total Revenue", amount: "₹1,24,680", txns: 892, color: C.gold },
+              ].map(r => (
+                <div key={r.period} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid " + C.border }}>
+                  <span style={{ color: C.muted, fontSize: 13 }}>{r.period}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <p style={{ color: r.color, fontSize: 15, fontWeight: 800 }}>{r.amount}</p>
+                    <p style={{ color: C.dim, fontSize: 11 }}>{r.txns} transactions</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+
+            {/* Recent Logins */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>👤 Recent User Logins</p>
+              {[
+                { name: "Priya S.", email: "priya@gmail.com", plan: "Creator", time: "2 min ago", color: C.pink },
+                { name: "Rahul K.", email: "rahul@hotmail.com", plan: "Free", time: "8 min ago", color: C.muted },
+                { name: "Sneha M.", email: "sneha@yahoo.com", plan: "Pro", time: "15 min ago", color: C.cyan },
+                { name: "Amit J.", email: "amit@gmail.com", plan: "Starter", time: "23 min ago", color: "#a855f7" },
+                { name: "Divya R.", email: "divya@gmail.com", plan: "Free", time: "1 hr ago", color: C.muted },
+                { name: "Vikas T.", email: "vikas@outlook.com", plan: "Creator", time: "2 hr ago", color: C.pink },
+              ].map(u => (
+                <div key={u.email} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid " + C.border }}>
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: u.color + "22", display: "flex", alignItems: "center", justifyContent: "center", color: u.color, fontWeight: 800, fontSize: 13, flexShrink: 0 }}>{u.name[0]}</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{u.name}</p>
+                    <p style={{ color: C.dim, fontSize: 11 }}>{u.email}</p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ background: u.color + "22", color: u.color, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>{u.plan}</span>
+                    <p style={{ color: C.dim, fontSize: 10, marginTop: 3 }}>{u.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Digital Marketing */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>📱 Digital Marketing Connections</p>
+              {[
+                { name: "Meta (Facebook & Instagram)", status: "Connect", color: "#1877F2", icon: "📘", desc: "Run ads, track conversions" },
+                { name: "Google Ads", status: "Connect", color: "#EA4335", icon: "🔍", desc: "Search & display campaigns" },
+                { name: "TikTok Business", status: "Connect", color: "#69C9D0", icon: "🎵", desc: "TikTok pixel & ads" },
+                { name: "YouTube Ads", status: "Connect", color: "#FF0000", icon: "▶️", desc: "Video ad campaigns" },
+                { name: "WhatsApp Business", status: "Connect", color: "#25D366", icon: "💬", desc: "Customer messaging" },
+                { name: "Razorpay Analytics", status: "✅ Connected", color: C.green, icon: "💳", desc: "Payment tracking" },
+              ].map(p => (
+                <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid " + C.border }}>
+                  <span style={{ fontSize: 20 }}>{p.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{p.name}</p>
+                    <p style={{ color: C.dim, fontSize: 11 }}>{p.desc}</p>
+                  </div>
+                  <button style={{ padding: "5px 12px", borderRadius: 7, background: p.status.includes("✅") ? C.green + "22" : p.color + "22", border: "1px solid " + (p.status.includes("✅") ? C.green : p.color) + "55", color: p.status.includes("✅") ? C.green : p.color, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                    {p.status}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Transactions */}
+          <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid " + C.border, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <p style={{ fontWeight: 800, fontSize: 15 }}>💳 Recent Transactions</p>
+              <span style={{ color: C.muted, fontSize: 12 }}>Powered by Razorpay</span>
+            </div>
+            {[
+              { user: "Priya S.", plan: "Creator", amount: "₹499", status: "Success", time: "2 min ago", id: "pay_RzP2847" },
+              { user: "Rahul K.", plan: "Impulse Pack", amount: "₹119", status: "Success", time: "14 min ago", id: "pay_RzP2846" },
+              { user: "Sneha M.", plan: "Pro Annual", amount: "₹9,999", status: "Success", time: "1 hr ago", id: "pay_RzP2845" },
+              { user: "Amit J.", plan: "Starter", amount: "₹199", status: "Success", time: "2 hr ago", id: "pay_RzP2844" },
+              { user: "Kavya L.", plan: "Creator", amount: "₹499", status: "Refunded", time: "3 hr ago", id: "pay_RzP2843" },
+            ].map(t => (
+              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", borderBottom: "1px solid " + C.border }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{t.user}</p>
+                  <p style={{ color: C.muted, fontSize: 11 }}>{t.plan} · {t.id}</p>
+                </div>
+                <span style={{ color: C.green, fontWeight: 800, fontSize: 15 }}>{t.amount}</span>
+                <span style={{ background: t.status === "Success" ? C.green + "22" : C.red + "22", color: t.status === "Success" ? C.green : C.red, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 6 }}>{t.status}</span>
+                <span style={{ color: C.dim, fontSize: 11 }}>{t.time}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick Actions */}
+          <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+            <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>⚡ Quick Actions</p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {[
+                { label: "📧 Send Email Blast", color: C.pink },
+                { label: "🎁 Give Free Credits", color: C.cyan },
+                { label: "🚫 Suspend User", color: C.red },
+                { label: "📊 Export Report CSV", color: C.green },
+                { label: "💬 WhatsApp Campaign", color: "#25D366" },
+                { label: "🔔 Push Notification", color: C.gold },
+              ].map(a => (
+                <button key={a.label} style={{ padding: "10px 16px", borderRadius: 10, background: a.color + "18", border: "1px solid " + a.color + "44", color: a.color, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }
@@ -114,6 +295,187 @@ function Card({ children, accent, style }) {
   return (
     <div style={{ background: C.card, border: "1px solid " + (accent || C.border), borderRadius: 14, padding: 16, marginBottom: 12, ...style }}>
       {children}
+      {/* ══ ADMIN PANEL ══ */}
+      {page === "admin" && user?.isAdmin && (
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 24px" }}>
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32, flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <div style={{ background: C.green + "22", border: "1px solid " + C.green + "44", borderRadius: 8, padding: "4px 12px" }}>
+                  <span style={{ color: C.green, fontSize: 11, fontWeight: 800 }}>⚙️ ADMIN PANEL</span>
+                </div>
+              </div>
+              <h1 style={{ fontSize: 28, fontWeight: 900, letterSpacing: -0.5 }}>rasaaistudio.com</h1>
+              <p style={{ color: C.muted, fontSize: 14 }}>Welcome, {user.name} — Full Admin Access</p>
+            </div>
+            <button onClick={() => setPage("studio")} style={{ padding: "10px 20px", borderRadius: 10, background: "linear-gradient(90deg,#D946EF,#7C3AED)", border: "none", color: C.white, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Go to Studio</button>
+          </div>
+
+          {/* Stats Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 14, marginBottom: 28 }}>
+            {[
+              { label: "Total Users", val: "1,247", change: "+23 today", color: C.pink },
+              { label: "Active Subscriptions", val: "89", change: "+5 this week", color: C.cyan },
+              { label: "Revenue (MTD)", val: "₹44,311", change: "+₹2,400 today", color: C.green },
+              { label: "Free Users", val: "1,158", change: "Conversion: 7.2%", color: C.gold },
+              { label: "Credits Used", val: "28,450", change: "This month", color: "#a855f7" },
+              { label: "Churn Rate", val: "3.2%", change: "↓ 0.5% vs last month", color: C.green },
+            ].map(s => (
+              <div key={s.label} style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 14, padding: "18px 16px" }}>
+                <p style={{ color: C.muted, fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</p>
+                <p style={{ color: s.color, fontSize: 26, fontWeight: 900, marginBottom: 4, letterSpacing: -0.5 }}>{s.val}</p>
+                <p style={{ color: C.dim, fontSize: 11 }}>{s.change}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+
+            {/* Subscription Plans Performance */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>📊 Subscription Performance</p>
+              {[
+                { name: "Starter ₹199", users: 34, revenue: "₹6,766", color: "#a855f7", pct: 38 },
+                { name: "Creator ₹499", users: 41, revenue: "₹20,459", color: C.pink, pct: 46 },
+                { name: "Pro ₹999", users: 14, revenue: "₹13,986", color: C.cyan, pct: 16 },
+                { name: "Impulse ₹119", users: 67, revenue: "₹7,973", color: C.gold, pct: 75 },
+              ].map(p => (
+                <div key={p.name} style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                    <span style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{p.name}</span>
+                    <div style={{ display: "flex", gap: 12 }}>
+                      <span style={{ color: C.muted, fontSize: 12 }}>{p.users} users</span>
+                      <span style={{ color: C.green, fontSize: 12, fontWeight: 700 }}>{p.revenue}</span>
+                    </div>
+                  </div>
+                  <div style={{ height: 6, background: C.border, borderRadius: 3 }}>
+                    <div style={{ height: "100%", background: p.color, borderRadius: 3, width: p.pct + "%" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Sales Report */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>💰 Sales Report</p>
+              {[
+                { period: "Today", amount: "₹2,418", txns: 8, color: C.green },
+                { period: "This Week", amount: "₹11,234", txns: 43, color: C.cyan },
+                { period: "This Month", amount: "₹44,311", txns: 156, color: C.pink },
+                { period: "Last Month", amount: "₹38,920", txns: 134, color: C.muted },
+                { period: "Total Revenue", amount: "₹1,24,680", txns: 892, color: C.gold },
+              ].map(r => (
+                <div key={r.period} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid " + C.border }}>
+                  <span style={{ color: C.muted, fontSize: 13 }}>{r.period}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <p style={{ color: r.color, fontSize: 15, fontWeight: 800 }}>{r.amount}</p>
+                    <p style={{ color: C.dim, fontSize: 11 }}>{r.txns} transactions</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+
+            {/* Recent Logins */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>👤 Recent User Logins</p>
+              {[
+                { name: "Priya S.", email: "priya@gmail.com", plan: "Creator", time: "2 min ago", color: C.pink },
+                { name: "Rahul K.", email: "rahul@hotmail.com", plan: "Free", time: "8 min ago", color: C.muted },
+                { name: "Sneha M.", email: "sneha@yahoo.com", plan: "Pro", time: "15 min ago", color: C.cyan },
+                { name: "Amit J.", email: "amit@gmail.com", plan: "Starter", time: "23 min ago", color: "#a855f7" },
+                { name: "Divya R.", email: "divya@gmail.com", plan: "Free", time: "1 hr ago", color: C.muted },
+                { name: "Vikas T.", email: "vikas@outlook.com", plan: "Creator", time: "2 hr ago", color: C.pink },
+              ].map(u => (
+                <div key={u.email} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid " + C.border }}>
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: u.color + "22", display: "flex", alignItems: "center", justifyContent: "center", color: u.color, fontWeight: 800, fontSize: 13, flexShrink: 0 }}>{u.name[0]}</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{u.name}</p>
+                    <p style={{ color: C.dim, fontSize: 11 }}>{u.email}</p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ background: u.color + "22", color: u.color, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>{u.plan}</span>
+                    <p style={{ color: C.dim, fontSize: 10, marginTop: 3 }}>{u.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Digital Marketing */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>📱 Digital Marketing Connections</p>
+              {[
+                { name: "Meta (Facebook & Instagram)", status: "Connect", color: "#1877F2", icon: "📘", desc: "Run ads, track conversions" },
+                { name: "Google Ads", status: "Connect", color: "#EA4335", icon: "🔍", desc: "Search & display campaigns" },
+                { name: "TikTok Business", status: "Connect", color: "#69C9D0", icon: "🎵", desc: "TikTok pixel & ads" },
+                { name: "YouTube Ads", status: "Connect", color: "#FF0000", icon: "▶️", desc: "Video ad campaigns" },
+                { name: "WhatsApp Business", status: "Connect", color: "#25D366", icon: "💬", desc: "Customer messaging" },
+                { name: "Razorpay Analytics", status: "✅ Connected", color: C.green, icon: "💳", desc: "Payment tracking" },
+              ].map(p => (
+                <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid " + C.border }}>
+                  <span style={{ fontSize: 20 }}>{p.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{p.name}</p>
+                    <p style={{ color: C.dim, fontSize: 11 }}>{p.desc}</p>
+                  </div>
+                  <button style={{ padding: "5px 12px", borderRadius: 7, background: p.status.includes("✅") ? C.green + "22" : p.color + "22", border: "1px solid " + (p.status.includes("✅") ? C.green : p.color) + "55", color: p.status.includes("✅") ? C.green : p.color, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                    {p.status}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Transactions */}
+          <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid " + C.border, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <p style={{ fontWeight: 800, fontSize: 15 }}>💳 Recent Transactions</p>
+              <span style={{ color: C.muted, fontSize: 12 }}>Powered by Razorpay</span>
+            </div>
+            {[
+              { user: "Priya S.", plan: "Creator", amount: "₹499", status: "Success", time: "2 min ago", id: "pay_RzP2847" },
+              { user: "Rahul K.", plan: "Impulse Pack", amount: "₹119", status: "Success", time: "14 min ago", id: "pay_RzP2846" },
+              { user: "Sneha M.", plan: "Pro Annual", amount: "₹9,999", status: "Success", time: "1 hr ago", id: "pay_RzP2845" },
+              { user: "Amit J.", plan: "Starter", amount: "₹199", status: "Success", time: "2 hr ago", id: "pay_RzP2844" },
+              { user: "Kavya L.", plan: "Creator", amount: "₹499", status: "Refunded", time: "3 hr ago", id: "pay_RzP2843" },
+            ].map(t => (
+              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", borderBottom: "1px solid " + C.border }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{t.user}</p>
+                  <p style={{ color: C.muted, fontSize: 11 }}>{t.plan} · {t.id}</p>
+                </div>
+                <span style={{ color: C.green, fontWeight: 800, fontSize: 15 }}>{t.amount}</span>
+                <span style={{ background: t.status === "Success" ? C.green + "22" : C.red + "22", color: t.status === "Success" ? C.green : C.red, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 6 }}>{t.status}</span>
+                <span style={{ color: C.dim, fontSize: 11 }}>{t.time}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick Actions */}
+          <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+            <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>⚡ Quick Actions</p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {[
+                { label: "📧 Send Email Blast", color: C.pink },
+                { label: "🎁 Give Free Credits", color: C.cyan },
+                { label: "🚫 Suspend User", color: C.red },
+                { label: "📊 Export Report CSV", color: C.green },
+                { label: "💬 WhatsApp Campaign", color: "#25D366" },
+                { label: "🔔 Push Notification", color: C.gold },
+              ].map(a => (
+                <button key={a.label} style={{ padding: "10px 16px", borderRadius: 10, background: a.color + "18", border: "1px solid " + a.color + "44", color: a.color, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }
@@ -175,10 +537,11 @@ export default function RasaAI() {
     if (authMode === "signup" && !name) { setError("Please enter your name"); return; }
     setError(""); setAuthLoading(true);
     setTimeout(() => {
-      const newUser = { name: name || email.split("@")[0], email, credits: 5, plan: "Free" };
+      const isAdmin = email.toLowerCase().includes("rasashopofficial") || email.toLowerCase() === "admin@rasaaistudio.com";
+      const newUser = { name: name || email.split("@")[0], email, credits: isAdmin ? 999999 : 5, plan: isAdmin ? "Admin" : "Free", isAdmin };
       setUser(newUser);
-      setCredits(5);
-      setPage("studio"); setAuthLoading(false);
+      setCredits(isAdmin ? 999999 : 5);
+      setPage(isAdmin ? "admin" : "studio"); setAuthLoading(false);
     }, 900);
   }
 
@@ -288,10 +651,11 @@ export default function RasaAI() {
             <>
               <button onClick={() => setPage("studio")} style={{ background: page === "studio" ? C.pink + "22" : "none", border: "none", color: page === "studio" ? C.pink : C.muted, padding: "7px 16px", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "inherit" }}>Studio</button>
               <button onClick={() => setPage("dashboard")} style={{ background: page === "dashboard" ? C.pink + "22" : "none", border: "none", color: page === "dashboard" ? C.pink : C.muted, padding: "7px 16px", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "inherit" }}>Dashboard</button>
+              {user?.isAdmin && <button onClick={() => setPage("admin")} style={{ background: page === "admin" ? "#10B98122" : "none", border: "none", color: page === "admin" ? C.green : C.muted, padding: "7px 16px", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: 13, fontFamily: "inherit" }}>⚙️ Admin</button>}
               <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 99, padding: "5px 12px", display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#D946EF,#7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 12 }}>{user.name[0].toUpperCase()}</div>
                 <span style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{user.name}</span>
-                <span style={{ color: C.pink, fontSize: 11, fontWeight: 700 }}>{credits}cr</span>
+                <span style={{ color: user?.isAdmin ? C.green : C.pink, fontSize: 11, fontWeight: 700 }}>{user?.isAdmin ? "∞ ADMIN" : credits + "cr"}</span>
               </div>
               <button onClick={handleSignout} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Sign out</button>
             </>
@@ -938,6 +1302,187 @@ export default function RasaAI() {
           </div>
         </div>
       )}
+      {/* ══ ADMIN PANEL ══ */}
+      {page === "admin" && user?.isAdmin && (
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 24px" }}>
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32, flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <div style={{ background: C.green + "22", border: "1px solid " + C.green + "44", borderRadius: 8, padding: "4px 12px" }}>
+                  <span style={{ color: C.green, fontSize: 11, fontWeight: 800 }}>⚙️ ADMIN PANEL</span>
+                </div>
+              </div>
+              <h1 style={{ fontSize: 28, fontWeight: 900, letterSpacing: -0.5 }}>rasaaistudio.com</h1>
+              <p style={{ color: C.muted, fontSize: 14 }}>Welcome, {user.name} — Full Admin Access</p>
+            </div>
+            <button onClick={() => setPage("studio")} style={{ padding: "10px 20px", borderRadius: 10, background: "linear-gradient(90deg,#D946EF,#7C3AED)", border: "none", color: C.white, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Go to Studio</button>
+          </div>
+
+          {/* Stats Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 14, marginBottom: 28 }}>
+            {[
+              { label: "Total Users", val: "1,247", change: "+23 today", color: C.pink },
+              { label: "Active Subscriptions", val: "89", change: "+5 this week", color: C.cyan },
+              { label: "Revenue (MTD)", val: "₹44,311", change: "+₹2,400 today", color: C.green },
+              { label: "Free Users", val: "1,158", change: "Conversion: 7.2%", color: C.gold },
+              { label: "Credits Used", val: "28,450", change: "This month", color: "#a855f7" },
+              { label: "Churn Rate", val: "3.2%", change: "↓ 0.5% vs last month", color: C.green },
+            ].map(s => (
+              <div key={s.label} style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 14, padding: "18px 16px" }}>
+                <p style={{ color: C.muted, fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</p>
+                <p style={{ color: s.color, fontSize: 26, fontWeight: 900, marginBottom: 4, letterSpacing: -0.5 }}>{s.val}</p>
+                <p style={{ color: C.dim, fontSize: 11 }}>{s.change}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+
+            {/* Subscription Plans Performance */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>📊 Subscription Performance</p>
+              {[
+                { name: "Starter ₹199", users: 34, revenue: "₹6,766", color: "#a855f7", pct: 38 },
+                { name: "Creator ₹499", users: 41, revenue: "₹20,459", color: C.pink, pct: 46 },
+                { name: "Pro ₹999", users: 14, revenue: "₹13,986", color: C.cyan, pct: 16 },
+                { name: "Impulse ₹119", users: 67, revenue: "₹7,973", color: C.gold, pct: 75 },
+              ].map(p => (
+                <div key={p.name} style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                    <span style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{p.name}</span>
+                    <div style={{ display: "flex", gap: 12 }}>
+                      <span style={{ color: C.muted, fontSize: 12 }}>{p.users} users</span>
+                      <span style={{ color: C.green, fontSize: 12, fontWeight: 700 }}>{p.revenue}</span>
+                    </div>
+                  </div>
+                  <div style={{ height: 6, background: C.border, borderRadius: 3 }}>
+                    <div style={{ height: "100%", background: p.color, borderRadius: 3, width: p.pct + "%" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Sales Report */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>💰 Sales Report</p>
+              {[
+                { period: "Today", amount: "₹2,418", txns: 8, color: C.green },
+                { period: "This Week", amount: "₹11,234", txns: 43, color: C.cyan },
+                { period: "This Month", amount: "₹44,311", txns: 156, color: C.pink },
+                { period: "Last Month", amount: "₹38,920", txns: 134, color: C.muted },
+                { period: "Total Revenue", amount: "₹1,24,680", txns: 892, color: C.gold },
+              ].map(r => (
+                <div key={r.period} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid " + C.border }}>
+                  <span style={{ color: C.muted, fontSize: 13 }}>{r.period}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <p style={{ color: r.color, fontSize: 15, fontWeight: 800 }}>{r.amount}</p>
+                    <p style={{ color: C.dim, fontSize: 11 }}>{r.txns} transactions</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+
+            {/* Recent Logins */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>👤 Recent User Logins</p>
+              {[
+                { name: "Priya S.", email: "priya@gmail.com", plan: "Creator", time: "2 min ago", color: C.pink },
+                { name: "Rahul K.", email: "rahul@hotmail.com", plan: "Free", time: "8 min ago", color: C.muted },
+                { name: "Sneha M.", email: "sneha@yahoo.com", plan: "Pro", time: "15 min ago", color: C.cyan },
+                { name: "Amit J.", email: "amit@gmail.com", plan: "Starter", time: "23 min ago", color: "#a855f7" },
+                { name: "Divya R.", email: "divya@gmail.com", plan: "Free", time: "1 hr ago", color: C.muted },
+                { name: "Vikas T.", email: "vikas@outlook.com", plan: "Creator", time: "2 hr ago", color: C.pink },
+              ].map(u => (
+                <div key={u.email} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid " + C.border }}>
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: u.color + "22", display: "flex", alignItems: "center", justifyContent: "center", color: u.color, fontWeight: 800, fontSize: 13, flexShrink: 0 }}>{u.name[0]}</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{u.name}</p>
+                    <p style={{ color: C.dim, fontSize: 11 }}>{u.email}</p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ background: u.color + "22", color: u.color, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>{u.plan}</span>
+                    <p style={{ color: C.dim, fontSize: 10, marginTop: 3 }}>{u.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Digital Marketing */}
+            <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>📱 Digital Marketing Connections</p>
+              {[
+                { name: "Meta (Facebook & Instagram)", status: "Connect", color: "#1877F2", icon: "📘", desc: "Run ads, track conversions" },
+                { name: "Google Ads", status: "Connect", color: "#EA4335", icon: "🔍", desc: "Search & display campaigns" },
+                { name: "TikTok Business", status: "Connect", color: "#69C9D0", icon: "🎵", desc: "TikTok pixel & ads" },
+                { name: "YouTube Ads", status: "Connect", color: "#FF0000", icon: "▶️", desc: "Video ad campaigns" },
+                { name: "WhatsApp Business", status: "Connect", color: "#25D366", icon: "💬", desc: "Customer messaging" },
+                { name: "Razorpay Analytics", status: "✅ Connected", color: C.green, icon: "💳", desc: "Payment tracking" },
+              ].map(p => (
+                <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid " + C.border }}>
+                  <span style={{ fontSize: 20 }}>{p.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{p.name}</p>
+                    <p style={{ color: C.dim, fontSize: 11 }}>{p.desc}</p>
+                  </div>
+                  <button style={{ padding: "5px 12px", borderRadius: 7, background: p.status.includes("✅") ? C.green + "22" : p.color + "22", border: "1px solid " + (p.status.includes("✅") ? C.green : p.color) + "55", color: p.status.includes("✅") ? C.green : p.color, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                    {p.status}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Transactions */}
+          <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid " + C.border, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <p style={{ fontWeight: 800, fontSize: 15 }}>💳 Recent Transactions</p>
+              <span style={{ color: C.muted, fontSize: 12 }}>Powered by Razorpay</span>
+            </div>
+            {[
+              { user: "Priya S.", plan: "Creator", amount: "₹499", status: "Success", time: "2 min ago", id: "pay_RzP2847" },
+              { user: "Rahul K.", plan: "Impulse Pack", amount: "₹119", status: "Success", time: "14 min ago", id: "pay_RzP2846" },
+              { user: "Sneha M.", plan: "Pro Annual", amount: "₹9,999", status: "Success", time: "1 hr ago", id: "pay_RzP2845" },
+              { user: "Amit J.", plan: "Starter", amount: "₹199", status: "Success", time: "2 hr ago", id: "pay_RzP2844" },
+              { user: "Kavya L.", plan: "Creator", amount: "₹499", status: "Refunded", time: "3 hr ago", id: "pay_RzP2843" },
+            ].map(t => (
+              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", borderBottom: "1px solid " + C.border }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{t.user}</p>
+                  <p style={{ color: C.muted, fontSize: 11 }}>{t.plan} · {t.id}</p>
+                </div>
+                <span style={{ color: C.green, fontWeight: 800, fontSize: 15 }}>{t.amount}</span>
+                <span style={{ background: t.status === "Success" ? C.green + "22" : C.red + "22", color: t.status === "Success" ? C.green : C.red, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 6 }}>{t.status}</span>
+                <span style={{ color: C.dim, fontSize: 11 }}>{t.time}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick Actions */}
+          <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
+            <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>⚡ Quick Actions</p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {[
+                { label: "📧 Send Email Blast", color: C.pink },
+                { label: "🎁 Give Free Credits", color: C.cyan },
+                { label: "🚫 Suspend User", color: C.red },
+                { label: "📊 Export Report CSV", color: C.green },
+                { label: "💬 WhatsApp Campaign", color: "#25D366" },
+                { label: "🔔 Push Notification", color: C.gold },
+              ].map(a => (
+                <button key={a.label} style={{ padding: "10px 16px", borderRadius: 10, background: a.color + "18", border: "1px solid " + a.color + "44", color: a.color, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }
