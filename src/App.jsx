@@ -137,7 +137,10 @@ export default function RasaAI() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
-  const [credits, setCredits] = useState(300);
+  const [credits, setCredits] = useState(5);
+  const [videoModel, setVideoModel] = useState("sora2_free");
+  const [sora2Used, setSora2Used] = useState(0);
+  const [showImpulse, setShowImpulse] = useState(false);
   const [publishStatus, setPublishStatus] = useState({});
   const [history, setHistory] = useState([]);
   const fileRef = useRef();
@@ -171,9 +174,10 @@ export default function RasaAI() {
     if (!email || !pass) { setError("Please fill all fields"); return; }
     if (authMode === "signup" && !name) { setError("Please enter your name"); return; }
     setError(""); setAuthLoading(true);
-    // 🔥 PRODUCTION: Replace with Firebase signInWithEmailAndPassword / createUserWithEmailAndPassword
     setTimeout(() => {
-      setUser({ name: name || email.split("@")[0], email, credits: 300, plan: "Free" });
+      const newUser = { name: name || email.split("@")[0], email, credits: 5, plan: "Free" };
+      setUser(newUser);
+      setCredits(5);
       setPage("studio"); setAuthLoading(false);
     }, 900);
   }
@@ -195,7 +199,8 @@ export default function RasaAI() {
     if (!otp || otp.length < 4) { setError("Enter valid OTP"); return; }
     setError(""); setAuthLoading(true);
     setTimeout(() => {
-      setUser({ name: "Creator", phone: "+91 " + phone, credits: 300, plan: "Free" });
+      setUser({ name: "Creator", phone: "+91 " + phone, credits: 5, plan: "Free" });
+      setCredits(5);
       setPage("studio"); setAuthLoading(false);
     }, 1000);
   }
@@ -209,7 +214,18 @@ export default function RasaAI() {
   /* ── GENERATE ── */
   const generate = useCallback(async () => {
     if (!prompt.trim() && tool !== "img2vid" && tool !== "aud2vid") { setError("Please enter a description"); return; }
-    if (credits <= 0) { setError("No credits left. Please upgrade."); return; }
+    if (credits <= 0) { setShowImpulse(true); return; }
+    const selectedModel = VIDEO_MODELS.find(m => m.id === videoModel);
+    if (tool === "video") {
+      if (videoModel === "sora2_free" && sora2Used >= 2) {
+        setError("Sora 2 free limit reached! Upgrade to Starter ₹199/mo for unlimited Sora 2 videos. 🚀");
+        return;
+      }
+      if (selectedModel && !selectedModel.free && user?.plan === "Free") {
+        setError(selectedModel.name + " requires upgrade to " + (selectedModel.plan === "starter" ? "Starter ₹199/mo" : selectedModel.plan === "creator" ? "Creator ₹499/mo" : "Pro ₹999/mo") + ". Upgrade now!");
+        return;
+      }
+    }
     setLoading(true); setResult(null); setError("");
     try {
       let userPrompt = "";
@@ -232,6 +248,7 @@ export default function RasaAI() {
       }
       setResult(data);
       setCredits(c => c - 1);
+      if (tool === "video" && videoModel === "sora2_free") setSora2Used(s => s + 1);
       setHistory(h => [{ id: Date.now(), tool, platform, prompt, result: data }, ...h].slice(0, 30));
     } catch (err) {
       setError("Generation failed. Please try again.");
@@ -500,6 +517,53 @@ export default function RasaAI() {
       {/* ══ STUDIO ══ */}
       {page === "studio" && user && (
         <div style={{ display: "flex", height: "calc(100vh - 60px)", overflow: "hidden" }}>
+          {/* IMPULSE BUY POPUP */}
+          {showImpulse && (
+            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+              <div style={{ background: "linear-gradient(135deg,#141728,#1a0a2e)", border: "2px solid " + C.pink, borderRadius: 24, padding: "36px 32px", maxWidth: 400, width: "100%", textAlign: "center", animation: "fadeIn 0.3s ease", position: "relative" }}>
+                <button onClick={() => setShowImpulse(false)} style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: C.muted, fontSize: 20, cursor: "pointer" }}>✕</button>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>⚡</div>
+                <h2 style={{ color: C.white, fontSize: 22, fontWeight: 900, marginBottom: 8, letterSpacing: -0.5 }}>Credits Khatam!</h2>
+                <p style={{ color: C.muted, fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>Ek aur viral post banana tha? Abhi instant credits lo!</p>
+
+                {/* Impulse Pack */}
+                <div style={{ background: "#0f0900", border: "2px dashed " + C.gold, borderRadius: 16, padding: "20px", marginBottom: 16, cursor: "pointer" }} onClick={() => { setCredits(c => c + 50); setShowImpulse(false); }}>
+                  <p style={{ color: C.gold, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 6 }}>⚡ INSTANT CREDIT PACK</p>
+                  <p style={{ color: C.white, fontSize: 26, fontWeight: 900, marginBottom: 4 }}>50 Credits</p>
+                  <p style={{ color: C.gold, fontSize: 28, fontWeight: 900, marginBottom: 4 }}>₹119</p>
+                  <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>One-time · Expires in <span style={{ color: C.gold, fontWeight: 700 }}>6 days</span> · No subscription</p>
+                  <div style={{ background: "linear-gradient(90deg,#f59e0b,#ef4444)", borderRadius: 12, padding: "13px", color: "#fff", fontWeight: 800, fontSize: 15 }}>Buy Now — ₹119 →</div>
+                </div>
+
+                <p style={{ color: C.muted, fontSize: 12, marginBottom: 14 }}>Ya phir subscription lo aur unlimited banao:</p>
+
+                {/* Plans */}
+                <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                  {[
+                    { name: "Starter", price: "₹199", credits: "100cr/mo", color: "#a855f7" },
+                    { name: "Creator", price: "₹499", credits: "300cr/mo", color: C.pink, popular: true },
+                    { name: "Pro", price: "₹999", credits: "1000cr/mo", color: C.cyan },
+                  ].map(p => (
+                    <div key={p.name} onClick={() => { setPage("pricing"); setShowImpulse(false); }} style={{ flex: 1, background: p.popular ? p.color + "22" : C.card, border: "1.5px solid " + (p.popular ? p.color : C.border), borderRadius: 12, padding: "12px 8px", cursor: "pointer", position: "relative" }}>
+                      {p.popular && <div style={{ position: "absolute", top: -9, left: "50%", transform: "translateX(-50%)", background: p.color, borderRadius: 10, padding: "2px 8px", fontSize: 8, fontWeight: 800, color: "#fff", whiteSpace: "nowrap" }}>POPULAR</div>}
+                      <p style={{ color: p.color, fontSize: 11, fontWeight: 800, marginBottom: 2 }}>{p.name}</p>
+                      <p style={{ color: C.white, fontSize: 16, fontWeight: 900 }}>{p.price}</p>
+                      <p style={{ color: C.muted, fontSize: 10 }}>{p.credits}</p>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ color: C.dim, fontSize: 11 }}>🔒 Secured by Razorpay · GST Invoice available</p>
+              </div>
+            </div>
+          )}
+
+          {/* Welcome Banner */}
+          {credits === 5 && (
+            <div style={{ position: "fixed", top: 70, right: 20, zIndex: 999, background: "linear-gradient(135deg,#10B981,#059669)", borderRadius: 14, padding: "14px 20px", boxShadow: "0 8px 30px #10B98144", animation: "fadeIn 0.5s ease", maxWidth: 280 }}>
+              <p style={{ color: "#fff", fontWeight: 800, fontSize: 14, marginBottom: 4 }}>🎉 Welcome! 5 Free Credits</p>
+              <p style={{ color: "#d1fae5", fontSize: 12 }}>Use wisely — upgrade for unlimited creation!</p>
+            </div>
+          )}
           {/* SIDEBAR */}
           <div style={{ width: 210, background: C.surface, borderRight: "1px solid " + C.border, padding: "14px 10px", overflowY: "auto", flexShrink: 0 }}>
             <div style={{ background: C.card, borderRadius: 10, padding: "12px 14px", marginBottom: 14, border: "1px solid " + C.border }}>
@@ -508,8 +572,9 @@ export default function RasaAI() {
                 <span style={{ color: C.pink, fontSize: 10, fontWeight: 700 }}>{user.plan || "FREE"}</span>
               </div>
               <div style={{ color: C.white, fontWeight: 800, fontSize: 24, marginBottom: 6 }}>{credits}</div>
+            <p style={{ color: C.muted, fontSize: 10, marginBottom: 6 }}>Free: 5 credits only · Upgrade for more</p>
               <div style={{ height: 3, background: C.border, borderRadius: 2 }}>
-                <div style={{ height: "100%", background: "linear-gradient(90deg,#D946EF,#22D3EE)", borderRadius: 2, width: Math.min((credits / 300) * 100, 100) + "%" }} />
+                <div style={{ height: "100%", background: "linear-gradient(90deg,#D946EF,#22D3EE)", borderRadius: 2, width: Math.min((credits / 5) * 100, 100) + "%" }} />
               </div>
               <button onClick={() => setPage("pricing")} style={{ width: "100%", marginTop: 10, padding: "7px", borderRadius: 7, background: C.pink + "22", border: "1px solid " + C.pink + "44", color: C.pink, fontWeight: 700, fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>Upgrade</button>
             </div>
@@ -549,6 +614,26 @@ export default function RasaAI() {
               <select value={tone} onChange={e => setTone(e.target.value)} style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 7, padding: "5px 10px", color: C.white, fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>
                 {TONES.map(t => <option key={t}>{t}</option>)}
               </select>
+              {tool === "video" && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {VIDEO_MODELS.map(m => {
+                    const isLocked = !m.free && user?.plan === "Free";
+                    const isSora2Free = m.id === "sora2_free";
+                    const remaining = 2 - sora2Used;
+                    return (
+                      <button key={m.id} onClick={() => !isLocked && setVideoModel(m.id)}
+                        style={{ padding: "5px 11px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: isLocked ? "not-allowed" : "pointer", fontFamily: "inherit", border: videoModel === m.id ? "1.5px solid " + m.color : "1px solid " + C.border, background: videoModel === m.id ? m.color + "22" : C.card, color: isLocked ? C.dim : videoModel === m.id ? m.color : C.muted, display: "flex", alignItems: "center", gap: 5, opacity: isLocked ? 0.55 : 1, transition: "all 0.15s" }}>
+                        {isLocked && <span>🔒</span>}
+                        {m.name}
+                        <span style={{ background: m.color + "22", color: isLocked ? C.dim : m.color, fontSize: 9, padding: "2px 6px", borderRadius: 4, fontWeight: 800 }}>
+                          {isSora2Free ? `${remaining} left` : m.badge}
+                        </span>
+                        {m.cost > 0 && !isLocked && <span style={{ color: C.dim, fontSize: 9 }}>{m.cost}cr</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
