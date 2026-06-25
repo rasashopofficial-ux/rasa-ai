@@ -125,7 +125,7 @@ async function callAI(prompt) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "anthropic-version": "2023-06-01",
+      "anthropic-version": "2023-06-01","x-api-key": "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",
       "anthropic-dangerous-direct-browser-access": "true"
     },
     body: JSON.stringify({
