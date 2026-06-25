@@ -54,7 +54,12 @@ async function callAI(prompt) {
   if(!res.ok) throw new Error("API error "+res.status);
   const data = await res.json();
   const text = data.content?.map(b=>b.text||"").join("")||"";
-  return JSON.parse(text);
+
+console.log("CLAUDE RESPONSE:", text);
+
+return {
+  raw: text
+};
 }
 
 function CopyBtn({text,label}){
