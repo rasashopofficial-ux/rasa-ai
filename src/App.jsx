@@ -52,7 +52,9 @@ async function callAI(prompt) {
     }),
   });
   if(!res.ok) throw new Error("API error "+res.status);
-  const data = await res.json();
+  async function callAI(prompt) {
+   ...
+}
   const text = data.content?.map(b=>b.text||"").join("")||"";
 
 console.log("CLAUDE RESPONSE:", text);
