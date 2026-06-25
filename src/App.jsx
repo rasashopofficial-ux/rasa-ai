@@ -69,6 +69,57 @@ const VIDEO_MODELS = [
   { id: "kling",      name: "Kling",  color: "#10B981", free: false, plan: "pro",     badge: "4K",   cost: 5 },
 ];
 
+/* ══ DATA LAYER — persistent localStorage "database" ══ */
+const DEFAULT_PLANS = [
+  { id: "starter", name: "Starter", price: 199, credits: 100, color: "#a855f7", popular: false, features: ["100 credits/month", "All AI tools", "All 6 platforms", "Sora 2 video", "Email support"] },
+  { id: "creator", name: "Creator", price: 499, credits: 300, color: "#D946EF", popular: true,  features: ["300 credits/month", "All Starter features", "Priority generation queue", "4K Image export", "Priority support"] },
+  { id: "pro",     name: "Pro",     price: 999, credits: 1000, color: "#22D3EE", popular: false, features: ["1000 credits/month", "All Creator features", "Early access to new models", "API access (coming soon)", "Dedicated support"] },
+];
+const AD_PLATFORMS = [
+  { key: "meta",     name: "Meta (Facebook & Instagram)", color: "#1877F2", icon: "📘", desc: "Run ads, track conversions",  field: "Meta Business / Ad Account ID" },
+  { key: "google",   name: "Google Ads",                  color: "#EA4335", icon: "🔍", desc: "Search & display campaigns",  field: "Google Ads Customer ID" },
+  { key: "tiktok",   name: "TikTok Business",             color: "#69C9D0", icon: "🎵", desc: "TikTok pixel & ads",          field: "TikTok Advertiser ID" },
+  { key: "youtube",  name: "YouTube Ads",                 color: "#FF0000", icon: "▶️", desc: "Video ad campaigns",          field: "YouTube Channel / Ad ID" },
+  { key: "whatsapp", name: "WhatsApp Business",           color: "#25D366", icon: "💬", desc: "Customer messaging",          field: "WhatsApp Business Number" },
+  { key: "razorpay", name: "Razorpay Analytics",          color: "#10B981", icon: "💳", desc: "Payment tracking",            field: "Razorpay Key ID" },
+];
+const DB_KEY = "rasa_db_v1";
+function loadDB() { try { const raw = localStorage.getItem(DB_KEY); if (raw) return JSON.parse(raw); } catch {} return null; }
+function saveDB(db) { try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch {} }
+function initDB() {
+  let db = loadDB() || {};
+  if (!db.users) db.users = [];
+  if (!db.transactions) db.transactions = [];
+  if (!db.adConnections) db.adConnections = {};
+  if (!db.plans || !db.plans.length) db.plans = DEFAULT_PLANS;
+  saveDB(db);
+  return db;
+}
+function upsertUser(user) {
+  const db = initDB();
+  const now = Date.now();
+  const idx = db.users.findIndex(u => u.email && user.email && u.email.toLowerCase() === user.email.toLowerCase());
+  if (idx >= 0) db.users[idx] = { ...db.users[idx], ...user, lastLogin: now };
+  else db.users.push({ ...user, joined: now, lastLogin: now });
+  saveDB(db);
+  return db;
+}
+function addTransaction(txn) {
+  const db = initDB();
+  db.transactions.unshift({ id: "pay_" + Math.random().toString(36).slice(2, 9).toUpperCase(), time: Date.now(), status: "Success", ...txn });
+  db.transactions = db.transactions.slice(0, 100);
+  saveDB(db);
+  return db;
+}
+function setAdConnection(key, value) {
+  const db = initDB();
+  if (value) db.adConnections[key] = value; else delete db.adConnections[key];
+  saveDB(db);
+  return db;
+}
+function persistPlans(plans) { const db = initDB(); db.plans = plans; saveDB(db); return db; }
+const inr = n => "₹" + Number(n || 0).toLocaleString("en-IN");
+
 async function callAI(prompt) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -150,6 +201,13 @@ export default function RasaAI() {
   const [showImpulse, setShowImpulse] = useState(false);
   const [publishStatus, setPublishStatus] = useState({});
   const [history, setHistory] = useState([]);
+  const [plans, setPlansState] = useState(() => initDB().plans);
+  const [dbUsers, setDbUsers] = useState(() => initDB().users);
+  const [dbTxns, setDbTxns] = useState(() => initDB().transactions);
+  const [adConns, setAdConns] = useState(() => initDB().adConnections);
+  const [editPlan, setEditPlan] = useState(null);
+  const [connectAd, setConnectAd] = useState(null);
+  const [adInput, setAdInput] = useState("");
   const fileRef = useRef();
   const audioRef = useRef();
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -183,9 +241,11 @@ export default function RasaAI() {
     setError(""); setAuthLoading(true);
     setTimeout(() => {
       const isAdmin = email.toLowerCase().includes("rasashopofficial") || email.toLowerCase() === "admin@rasaaistudio.com";
-      const newUser = { name: name || email.split("@")[0], email, credits: isAdmin ? 999999 : 5, plan: isAdmin ? "Admin" : "Free", isAdmin };
+      const newUser = { name: name || email.split("@")[0], email, credits: isAdmin ? Infinity : 5, plan: isAdmin ? "Admin" : "Free", isAdmin };
+      upsertUser({ name: newUser.name, email, plan: newUser.plan, isAdmin });
+      refreshDB();
       setUser(newUser);
-      setCredits(isAdmin ? 999999 : 5);
+      setCredits(isAdmin ? Infinity : 5);
       setPage(isAdmin ? "admin" : "studio"); setAuthLoading(false);
     }, 900);
   }
@@ -207,7 +267,10 @@ export default function RasaAI() {
     if (!otp || otp.length < 4) { setError("Enter valid OTP"); return; }
     setError(""); setAuthLoading(true);
     setTimeout(() => {
-      setUser({ name: "Creator", phone: "+91 " + phone, credits: 5, plan: "Free" });
+      const u = { name: "Creator", phone: "+91 " + phone, credits: 5, plan: "Free", isAdmin: false };
+      upsertUser({ name: u.name, email: "+91" + phone, phone: u.phone, plan: "Free", isAdmin: false });
+      refreshDB();
+      setUser(u);
       setCredits(5);
       setPage("studio"); setAuthLoading(false);
     }, 1000);
@@ -222,10 +285,10 @@ export default function RasaAI() {
   /* ── GENERATE ── */
   const generate = useCallback(async () => {
     if (!prompt.trim() && tool !== "img2vid" && tool !== "aud2vid") { setError("Please enter a description"); return; }
-    if (credits <= 0) { setShowImpulse(true); return; }
+    if (!user?.isAdmin && credits <= 0) { setShowImpulse(true); return; }
     const selectedModel = VIDEO_MODELS.find(m => m.id === videoModel);
     if (tool === "video") {
-      if (videoModel === "sora2_free" && sora2Used >= 2) {
+      if (videoModel === "sora2_free" && sora2Used >= 2 && !user?.isAdmin) {
         setError("Sora 2 free limit reached! Upgrade to Starter ₹199/mo for unlimited Sora 2 videos. 🚀");
         return;
       }
@@ -255,7 +318,7 @@ export default function RasaAI() {
         data.imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(data.imagePrompt.slice(0, 500))}?width=1080&height=1080&nologo=true&seed=${Date.now()}`;
       }
       setResult(data);
-      setCredits(c => c - 1);
+      if (!user?.isAdmin) setCredits(c => c - 1);
       if (tool === "video" && videoModel === "sora2_free") setSora2Used(s => s + 1);
       setHistory(h => [{ id: Date.now(), tool, platform, prompt, result: data }, ...h].slice(0, 30));
     } catch (err) {
@@ -269,8 +332,75 @@ export default function RasaAI() {
     setTimeout(() => setPublishStatus(s => ({ ...s, [pid]: "done" })), 2000);
   }
 
+  /* ── DATA / ADMIN HANDLERS ── */
+  function refreshDB() {
+    const db = initDB();
+    setPlansState(db.plans); setDbUsers(db.users); setDbTxns(db.transactions); setAdConns(db.adConnections);
+  }
+  function buyPlan(plan) {
+    if (!user) { setPage("auth"); return; }
+    addTransaction({ user: user.name, plan: plan.name, amount: plan.price });
+    upsertUser({ name: user.name, email: user.email || ("+91" + (user.phone || "")), plan: plan.name, isAdmin: user.isAdmin });
+    setUser(u => ({ ...u, plan: plan.name }));
+    if (!user.isAdmin) setCredits(c => (c === Infinity ? c : c + plan.credits));
+    refreshDB(); setShowImpulse(false); setPage("studio");
+  }
+  function buyCreditPack() {
+    if (user) addTransaction({ user: user.name, plan: "Impulse Pack", amount: 119 });
+    setCredits(c => (c === Infinity ? c : c + 50));
+    refreshDB(); setShowImpulse(false);
+  }
+  function saveEditPlan() {
+    const updated = plans.map(pl => pl.id === editPlan.id ? { ...editPlan, price: Number(editPlan.price) || 0, credits: Number(editPlan.credits) || 0 } : pl);
+    persistPlans(updated); setPlansState(updated); setEditPlan(null);
+  }
+  function toggleAd(p) {
+    if (adConns[p.key]) { setAdConnection(p.key, null); refreshDB(); }
+    else { setConnectAd(p); setAdInput(""); }
+  }
+  function confirmConnectAd() {
+    setAdConnection(connectAd.key, { connected: true, account: adInput || "linked", at: Date.now() });
+    refreshDB(); setConnectAd(null); setAdInput("");
+  }
+
   const inputStyle = { width: "100%", background: C.surface, border: "1px solid " + C.border, borderRadius: 10, padding: "11px 14px", color: C.white, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
   const textareaStyle = { ...inputStyle, resize: "vertical", minHeight: 100 };
+
+  /* ── ADMIN COMPUTED METRICS (from real stored data) ── */
+  const nowTs = Date.now();
+  const DAY = 86400000;
+  const relTime = ts => { const d = nowTs - (ts || 0); if (d < 60000) return "just now"; if (d < 3600000) return Math.max(1, Math.floor(d / 60000)) + " min ago"; if (d < DAY) return Math.floor(d / 3600000) + " hr ago"; return Math.floor(d / DAY) + "d ago"; };
+  const planColorFor = name => { const pl = plans.find(p => p.name.toLowerCase() === (name || "").toLowerCase()); if (pl) return pl.color; if (name === "Admin") return C.green; return C.muted; };
+  const successTxns = dbTxns.filter(t => t.status === "Success");
+  const sumIn = arr => arr.reduce((a, t) => a + (Number(t.amount) || 0), 0);
+  const sod = new Date(); sod.setHours(0, 0, 0, 0); const startToday = sod.getTime();
+  const startWeek = nowTs - 7 * DAY;
+  const som = new Date(); som.setDate(1); som.setHours(0, 0, 0, 0); const startMonth = som.getTime();
+  const solm = new Date(); solm.setMonth(solm.getMonth() - 1, 1); solm.setHours(0, 0, 0, 0); const startLastMonth = solm.getTime();
+  const txToday = successTxns.filter(t => t.time >= startToday);
+  const txWeek = successTxns.filter(t => t.time >= startWeek);
+  const txMonth = successTxns.filter(t => t.time >= startMonth);
+  const txLastMonth = successTxns.filter(t => t.time >= startLastMonth && t.time < startMonth);
+  const paidUsers = dbUsers.filter(u => u.plan && !["Free", "Admin"].includes(u.plan));
+  const freeUsersCount = dbUsers.filter(u => (u.plan || "Free") === "Free").length;
+  const conversion = dbUsers.length ? ((paidUsers.length / dbUsers.length) * 100).toFixed(1) + "%" : "0%";
+  const adminStats = [
+    { label: "Total Users", val: dbUsers.length.toLocaleString("en-IN"), change: "Registered on this app", color: C.pink },
+    { label: "Active Subscriptions", val: paidUsers.length, change: "Paid plans", color: C.cyan },
+    { label: "Revenue (MTD)", val: inr(sumIn(txMonth)), change: inr(sumIn(txToday)) + " today", color: C.green },
+    { label: "Free Users", val: freeUsersCount, change: "Conversion: " + conversion, color: C.gold },
+    { label: "Transactions", val: successTxns.length, change: "All time", color: "#a855f7" },
+    { label: "Total Revenue", val: inr(sumIn(successTxns)), change: "All time", color: C.green },
+  ];
+  const salesReport = [
+    { period: "Today", amount: inr(sumIn(txToday)), txns: txToday.length, color: C.green },
+    { period: "This Week", amount: inr(sumIn(txWeek)), txns: txWeek.length, color: C.cyan },
+    { period: "This Month", amount: inr(sumIn(txMonth)), txns: txMonth.length, color: C.pink },
+    { period: "Last Month", amount: inr(sumIn(txLastMonth)), txns: txLastMonth.length, color: C.muted },
+    { period: "Total Revenue", amount: inr(sumIn(successTxns)), txns: successTxns.length, color: C.gold },
+  ];
+  const recentLogins = [...dbUsers].sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0)).slice(0, 6).map(u => ({ name: u.name || (u.email || "User").split("@")[0], email: u.email || u.phone || "—", plan: u.plan || "Free", time: relTime(u.lastLogin || u.joined), color: planColorFor(u.plan) }));
+  const recentTxns = dbTxns.slice(0, 6).map(t => ({ user: t.user || "—", plan: t.plan || "—", amount: inr(t.amount), status: t.status || "Success", time: relTime(t.time), id: t.id }));
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.white, fontFamily: "'Inter',system-ui,sans-serif" }}>
@@ -487,17 +617,13 @@ export default function RasaAI() {
           <p style={{ textAlign: "center", color: C.muted, marginBottom: 12, fontSize: 16 }}>New users get <span style={{ color: C.pink, fontWeight: 700 }}>100 free credits.</span> No card needed.</p>
           <p style={{ textAlign: "center", color: C.dim, marginBottom: 48, fontSize: 13 }}>Payments secured by Razorpay · All amounts in INR · GST Invoice on request</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 18 }}>
-            {[
-              { name: "STARTER", price: "₹199", period: "/mo", credits: 100, color: "#a855f7", features: ["100 credits/month", "All AI tools", "All 6 platforms", "Sora 2 video", "Email support"] },
-              { name: "CREATOR", price: "₹499", period: "/mo", credits: 300, color: C.pink, popular: true, features: ["300 credits/month", "All Starter features", "Priority generation queue", "4K Image export", "Priority support"] },
-              { name: "PRO", price: "₹999", period: "/mo", credits: 1000, color: C.cyan, features: ["1000 credits/month", "All Creator features", "Early access to new models", "API access (coming soon)", "Dedicated support"] },
-            ].map(plan => (
+            {plans.map(plan => (
               <div key={plan.name} style={{ background: plan.popular ? "linear-gradient(160deg,#141728,#1A0A2E)" : C.card, border: "1.5px solid " + (plan.popular ? C.pink : C.border), borderRadius: 18, padding: "28px 24px", position: "relative" }}>
                 {plan.popular && <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(90deg,#D946EF,#7C3AED)", borderRadius: 99, padding: "3px 14px", color: C.white, fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>MOST POPULAR</div>}
                 <p style={{ color: plan.color, fontWeight: 800, fontSize: 12, letterSpacing: 2, marginBottom: 10 }}>{plan.name}</p>
                 <div style={{ marginBottom: 20 }}>
-                  <span style={{ color: C.white, fontWeight: 800, fontSize: 42, letterSpacing: "-0.03em" }}>{plan.price}</span>
-                  <span style={{ color: C.muted, fontSize: 14 }}>{plan.period}</span>
+                  <span style={{ color: C.white, fontWeight: 800, fontSize: 42, letterSpacing: "-0.03em" }}>{inr(plan.price)}</span>
+                  <span style={{ color: C.muted, fontSize: 14 }}>/mo</span>
                 </div>
                 {plan.features.map(f => (
                   <div key={f} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
@@ -505,7 +631,7 @@ export default function RasaAI() {
                     <span style={{ color: C.white, fontSize: 13 }}>{f}</span>
                   </div>
                 ))}
-                <button onClick={() => user ? setPage("studio") : setPage("auth")} style={{ width: "100%", marginTop: 20, padding: "12px", borderRadius: 10, background: plan.popular ? "linear-gradient(90deg,#D946EF,#7C3AED)" : plan.color + "22", border: "none", color: plan.popular ? C.white : plan.color, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={() => buyPlan(plan)} style={{ width: "100%", marginTop: 20, padding: "12px", borderRadius: 10, background: plan.popular ? "linear-gradient(90deg,#D946EF,#7C3AED)" : plan.color + "22", border: "none", color: plan.popular ? C.white : plan.color, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
                   Start {plan.name}
                 </button>
               </div>
@@ -518,7 +644,7 @@ export default function RasaAI() {
               <p style={{ color: C.white, fontSize: 22, fontWeight: 900, marginBottom: 4 }}>50 credits for ₹119</p>
               <p style={{ color: C.muted, fontSize: 13 }}>One-time purchase · Expires in <span style={{ color: C.gold }}>6 days</span> · No subscription. Perfect for a viral push.</p>
             </div>
-            <button style={{ padding: "13px 24px", borderRadius: 12, background: "linear-gradient(90deg,#f59e0b,#ef4444)", border: "none", color: "#fff", fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>Buy now — ₹119</button>
+            <button style={{ padding: "13px 24px", borderRadius: 12, background: "linear-gradient(90deg,#f59e0b,#ef4444)", border: "none", color: "#fff", fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: "inherit" }} onClick={buyCreditPack}>Buy now — ₹119</button>
           </div>
         </div>
       )}
@@ -536,7 +662,7 @@ export default function RasaAI() {
                 <p style={{ color: C.muted, fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>Ek aur viral post banana tha? Abhi instant credits lo!</p>
 
                 {/* Impulse Pack */}
-                <div style={{ background: "#0f0900", border: "2px dashed " + C.gold, borderRadius: 16, padding: "20px", marginBottom: 16, cursor: "pointer" }} onClick={() => { setCredits(c => c + 50); setShowImpulse(false); }}>
+                <div style={{ background: "#0f0900", border: "2px dashed " + C.gold, borderRadius: 16, padding: "20px", marginBottom: 16, cursor: "pointer" }} onClick={buyCreditPack}>
                   <p style={{ color: C.gold, fontSize: 11, fontWeight: 800, letterSpacing: 2, marginBottom: 6 }}>⚡ INSTANT CREDIT PACK</p>
                   <p style={{ color: C.white, fontSize: 26, fontWeight: 900, marginBottom: 4 }}>50 Credits</p>
                   <p style={{ color: C.gold, fontSize: 28, fontWeight: 900, marginBottom: 4 }}>₹119</p>
@@ -682,7 +808,7 @@ export default function RasaAI() {
                     </span>
                   ) : "Generate — 1 credit"}
                 </button>
-                <p style={{ color: C.dim, fontSize: 11, textAlign: "center", marginTop: 6 }}>{credits} credits remaining</p>
+                <p style={{ color: C.dim, fontSize: 11, textAlign: "center", marginTop: 6 }}>{credits === Infinity ? "Unlimited" : credits} credits remaining</p>
               </div>
 
               {/* RESULT PANEL */}
@@ -912,7 +1038,7 @@ export default function RasaAI() {
             <button onClick={() => setPage("studio")} style={{ padding: "11px 22px", borderRadius: 10, background: "linear-gradient(90deg,#D946EF,#7C3AED)", border: "none", color: C.white, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>+ New Content</button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12, marginBottom: 24 }}>
-            {[{ label: "Credits Left", val: credits, color: C.pink }, { label: "Content Made", val: history.length, color: C.cyan }, { label: "Platforms", val: 6, color: C.gold }, { label: "Plan", val: user.plan || "Free", color: C.green }].map(s => (
+            {[{ label: "Credits Left", val: credits === Infinity ? "∞" : credits, color: C.pink }, { label: "Content Made", val: history.length, color: C.cyan }, { label: "Platforms", val: 6, color: C.gold }, { label: "Plan", val: user.plan || "Free", color: C.green }].map(s => (
               <div key={s.label} style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 12, padding: "18px 16px" }}>
                 <p style={{ color: s.color, fontWeight: 800, fontSize: 28, letterSpacing: "-0.02em" }}>{s.val}</p>
                 <p style={{ color: C.muted, fontSize: 12, marginTop: 4 }}>{s.label}</p>
@@ -966,14 +1092,7 @@ export default function RasaAI() {
 
           {/* Stats Cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 14, marginBottom: 28 }}>
-            {[
-              { label: "Total Users", val: "1,247", change: "+23 today", color: C.pink },
-              { label: "Active Subscriptions", val: "89", change: "+5 this week", color: C.cyan },
-              { label: "Revenue (MTD)", val: "₹44,311", change: "+₹2,400 today", color: C.green },
-              { label: "Free Users", val: "1,158", change: "Conversion: 7.2%", color: C.gold },
-              { label: "Credits Used", val: "28,450", change: "This month", color: "#a855f7" },
-              { label: "Churn Rate", val: "3.2%", change: "↓ 0.5% vs last month", color: C.green },
-            ].map(s => (
+            {adminStats.map(s => (
               <div key={s.label} style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 14, padding: "18px 16px" }}>
                 <p style={{ color: C.muted, fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</p>
                 <p style={{ color: s.color, fontSize: 26, fontWeight: 900, marginBottom: 4, letterSpacing: -0.5 }}>{s.val}</p>
@@ -984,40 +1103,37 @@ export default function RasaAI() {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
 
-            {/* Subscription Plans Performance */}
+            {/* Subscription Plans Performance (editable) */}
             <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
-              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>📊 Subscription Performance</p>
-              {[
-                { name: "Starter ₹199", users: 34, revenue: "₹6,766", color: "#a855f7", pct: 38 },
-                { name: "Creator ₹499", users: 41, revenue: "₹20,459", color: C.pink, pct: 46 },
-                { name: "Pro ₹999", users: 14, revenue: "₹13,986", color: C.cyan, pct: 16 },
-                { name: "Impulse ₹119", users: 67, revenue: "₹7,973", color: C.gold, pct: 75 },
-              ].map(p => (
-                <div key={p.name} style={{ marginBottom: 14 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                    <span style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{p.name}</span>
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <span style={{ color: C.muted, fontSize: 12 }}>{p.users} users</span>
-                      <span style={{ color: C.green, fontSize: 12, fontWeight: 700 }}>{p.revenue}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <p style={{ fontWeight: 800, fontSize: 15 }}>📊 Subscription Plans</p>
+                <span style={{ color: C.dim, fontSize: 11 }}>Tap ✎ to edit</span>
+              </div>
+              {plans.map(p => {
+                const count = dbUsers.filter(u => (u.plan || "").toLowerCase() === p.name.toLowerCase()).length;
+                const maxCount = Math.max(1, ...plans.map(pl => dbUsers.filter(u => (u.plan || "").toLowerCase() === pl.name.toLowerCase()).length));
+                return (
+                  <div key={p.id} style={{ marginBottom: 14 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5, alignItems: "center" }}>
+                      <span style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{p.name} {inr(p.price)} · {p.credits}cr</span>
+                      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                        <span style={{ color: C.muted, fontSize: 12 }}>{count} users</span>
+                        <span style={{ color: C.green, fontSize: 12, fontWeight: 700 }}>{inr(count * p.price)}</span>
+                        <button onClick={() => setEditPlan({ ...p })} style={{ background: C.pink + "22", border: "1px solid " + C.pink + "55", color: C.pink, borderRadius: 6, fontSize: 11, fontWeight: 700, padding: "2px 8px", cursor: "pointer", fontFamily: "inherit" }}>✎</button>
+                      </div>
+                    </div>
+                    <div style={{ height: 6, background: C.border, borderRadius: 3 }}>
+                      <div style={{ height: "100%", background: p.color, borderRadius: 3, width: (count / maxCount * 100) + "%" }} />
                     </div>
                   </div>
-                  <div style={{ height: 6, background: C.border, borderRadius: 3 }}>
-                    <div style={{ height: "100%", background: p.color, borderRadius: 3, width: p.pct + "%" }} />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Sales Report */}
             <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
               <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>💰 Sales Report</p>
-              {[
-                { period: "Today", amount: "₹2,418", txns: 8, color: C.green },
-                { period: "This Week", amount: "₹11,234", txns: 43, color: C.cyan },
-                { period: "This Month", amount: "₹44,311", txns: 156, color: C.pink },
-                { period: "Last Month", amount: "₹38,920", txns: 134, color: C.muted },
-                { period: "Total Revenue", amount: "₹1,24,680", txns: 892, color: C.gold },
-              ].map(r => (
+              {salesReport.map(r => (
                 <div key={r.period} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid " + C.border }}>
                   <span style={{ color: C.muted, fontSize: 13 }}>{r.period}</span>
                   <div style={{ textAlign: "right" }}>
@@ -1034,16 +1150,11 @@ export default function RasaAI() {
             {/* Recent Logins */}
             <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
               <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>👤 Recent User Logins</p>
-              {[
-                { name: "Priya S.", email: "priya@gmail.com", plan: "Creator", time: "2 min ago", color: C.pink },
-                { name: "Rahul K.", email: "rahul@hotmail.com", plan: "Free", time: "8 min ago", color: C.muted },
-                { name: "Sneha M.", email: "sneha@yahoo.com", plan: "Pro", time: "15 min ago", color: C.cyan },
-                { name: "Amit J.", email: "amit@gmail.com", plan: "Starter", time: "23 min ago", color: "#a855f7" },
-                { name: "Divya R.", email: "divya@gmail.com", plan: "Free", time: "1 hr ago", color: C.muted },
-                { name: "Vikas T.", email: "vikas@outlook.com", plan: "Creator", time: "2 hr ago", color: C.pink },
-              ].map(u => (
-                <div key={u.email} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid " + C.border }}>
-                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: u.color + "22", display: "flex", alignItems: "center", justifyContent: "center", color: u.color, fontWeight: 800, fontSize: 13, flexShrink: 0 }}>{u.name[0]}</div>
+              {recentLogins.length === 0 ? (
+                <p style={{ color: C.muted, fontSize: 13, padding: "20px 0", textAlign: "center" }}>No users have signed up yet.</p>
+              ) : recentLogins.map((u, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid " + C.border }}>
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: u.color + "22", display: "flex", alignItems: "center", justifyContent: "center", color: u.color, fontWeight: 800, fontSize: 13, flexShrink: 0 }}>{(u.name[0] || "?").toUpperCase()}</div>
                   <div style={{ flex: 1 }}>
                     <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{u.name}</p>
                     <p style={{ color: C.dim, fontSize: 11 }}>{u.email}</p>
@@ -1058,26 +1169,22 @@ export default function RasaAI() {
 
             {/* Digital Marketing */}
             <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, padding: "20px" }}>
-              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>📱 Digital Marketing Connections</p>
-              {[
-                { name: "Meta (Facebook & Instagram)", status: "Connect", color: "#1877F2", icon: "📘", desc: "Run ads, track conversions" },
-                { name: "Google Ads", status: "Connect", color: "#EA4335", icon: "🔍", desc: "Search & display campaigns" },
-                { name: "TikTok Business", status: "Connect", color: "#69C9D0", icon: "🎵", desc: "TikTok pixel & ads" },
-                { name: "YouTube Ads", status: "Connect", color: "#FF0000", icon: "▶️", desc: "Video ad campaigns" },
-                { name: "WhatsApp Business", status: "Connect", color: "#25D366", icon: "💬", desc: "Customer messaging" },
-                { name: "Razorpay Analytics", status: "✅ Connected", color: C.green, icon: "💳", desc: "Payment tracking" },
-              ].map(p => (
-                <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid " + C.border }}>
-                  <span style={{ fontSize: 20 }}>{p.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{p.name}</p>
-                    <p style={{ color: C.dim, fontSize: 11 }}>{p.desc}</p>
+              <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>📱 Advertising & Marketing Tools</p>
+              {AD_PLATFORMS.map(p => {
+                const conn = adConns[p.key];
+                return (
+                  <div key={p.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid " + C.border }}>
+                    <span style={{ fontSize: 20 }}>{p.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{p.name}</p>
+                      <p style={{ color: C.dim, fontSize: 11 }}>{conn ? "Connected · " + (conn.account || "linked") : p.desc}</p>
+                    </div>
+                    <button onClick={() => toggleAd(p)} style={{ padding: "5px 12px", borderRadius: 7, background: conn ? C.green + "22" : p.color + "22", border: "1px solid " + (conn ? C.green : p.color) + "55", color: conn ? C.green : p.color, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                      {conn ? "✓ Connected" : "Connect"}
+                    </button>
                   </div>
-                  <button style={{ padding: "5px 12px", borderRadius: 7, background: p.status.includes("✅") ? C.green + "22" : p.color + "22", border: "1px solid " + (p.status.includes("✅") ? C.green : p.color) + "55", color: p.status.includes("✅") ? C.green : p.color, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
-                    {p.status}
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -1085,15 +1192,11 @@ export default function RasaAI() {
           <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 16, overflow: "hidden", marginBottom: 20 }}>
             <div style={{ padding: "16px 20px", borderBottom: "1px solid " + C.border, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <p style={{ fontWeight: 800, fontSize: 15 }}>💳 Recent Transactions</p>
-              <span style={{ color: C.muted, fontSize: 12 }}>Powered by Razorpay</span>
+              <span style={{ color: C.muted, fontSize: 12 }}>Live</span>
             </div>
-            {[
-              { user: "Priya S.", plan: "Creator", amount: "₹499", status: "Success", time: "2 min ago", id: "pay_RzP2847" },
-              { user: "Rahul K.", plan: "Impulse Pack", amount: "₹119", status: "Success", time: "14 min ago", id: "pay_RzP2846" },
-              { user: "Sneha M.", plan: "Pro Annual", amount: "₹9,999", status: "Success", time: "1 hr ago", id: "pay_RzP2845" },
-              { user: "Amit J.", plan: "Starter", amount: "₹199", status: "Success", time: "2 hr ago", id: "pay_RzP2844" },
-              { user: "Kavya L.", plan: "Creator", amount: "₹499", status: "Refunded", time: "3 hr ago", id: "pay_RzP2843" },
-            ].map(t => (
+            {recentTxns.length === 0 ? (
+              <p style={{ color: C.muted, fontSize: 13, padding: "32px 20px", textAlign: "center" }}>No transactions yet. They appear here when users subscribe or buy credits.</p>
+            ) : recentTxns.map(t => (
               <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", borderBottom: "1px solid " + C.border }}>
                 <div style={{ flex: 1 }}>
                   <p style={{ color: C.white, fontSize: 13, fontWeight: 600 }}>{t.user}</p>
@@ -1127,6 +1230,41 @@ export default function RasaAI() {
         </div>
       )}
 
+      {/* PLAN EDIT MODAL */}
+      {editPlan && (
+        <div onClick={() => setEditPlan(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 18, padding: "26px 24px", maxWidth: 380, width: "100%" }}>
+            <p style={{ fontWeight: 900, fontSize: 18, marginBottom: 18 }}>Edit Plan</p>
+            <label style={{ color: C.muted, fontSize: 12, fontWeight: 700 }}>Plan Name</label>
+            <input value={editPlan.name} onChange={e => setEditPlan(pl => ({ ...pl, name: e.target.value }))} style={{ width: "100%", background: C.surface, border: "1px solid " + C.border, borderRadius: 10, padding: "11px 14px", color: C.white, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", margin: "6px 0 14px" }} />
+            <label style={{ color: C.muted, fontSize: 12, fontWeight: 700 }}>Price (₹ / month)</label>
+            <input type="number" value={editPlan.price} onChange={e => setEditPlan(pl => ({ ...pl, price: e.target.value }))} style={{ width: "100%", background: C.surface, border: "1px solid " + C.border, borderRadius: 10, padding: "11px 14px", color: C.white, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", margin: "6px 0 14px" }} />
+            <label style={{ color: C.muted, fontSize: 12, fontWeight: 700 }}>Credits / month</label>
+            <input type="number" value={editPlan.credits} onChange={e => setEditPlan(pl => ({ ...pl, credits: e.target.value }))} style={{ width: "100%", background: C.surface, border: "1px solid " + C.border, borderRadius: 10, padding: "11px 14px", color: C.white, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", margin: "6px 0 18px" }} />
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setEditPlan(null)} style={{ flex: 1, padding: "11px", borderRadius: 10, background: C.surface, border: "1px solid " + C.border, color: C.muted, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={saveEditPlan} style={{ flex: 1, padding: "11px", borderRadius: 10, background: "linear-gradient(90deg,#D946EF,#7C3AED)", border: "none", color: C.white, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AD CONNECT MODAL */}
+      {connectAd && (
+        <div onClick={() => setConnectAd(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 18, padding: "26px 24px", maxWidth: 400, width: "100%" }}>
+            <div style={{ fontSize: 34, marginBottom: 8 }}>{connectAd.icon}</div>
+            <p style={{ fontWeight: 900, fontSize: 18, marginBottom: 4 }}>Connect {connectAd.name}</p>
+            <p style={{ color: C.muted, fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>{connectAd.desc}. Enter your account details to link this channel.</p>
+            <label style={{ color: C.muted, fontSize: 12, fontWeight: 700 }}>{connectAd.field}</label>
+            <input value={adInput} onChange={e => setAdInput(e.target.value)} placeholder={connectAd.field} style={{ width: "100%", background: C.surface, border: "1px solid " + C.border, borderRadius: 10, padding: "11px 14px", color: C.white, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", margin: "6px 0 18px" }} />
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setConnectAd(null)} style={{ flex: 1, padding: "11px", borderRadius: 10, background: C.surface, border: "1px solid " + C.border, color: C.muted, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={confirmConnectAd} style={{ flex: 1, padding: "11px", borderRadius: 10, background: connectAd.color, border: "none", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Connect</button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
