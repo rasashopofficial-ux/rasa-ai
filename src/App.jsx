@@ -45,7 +45,7 @@ const DEFAULT_PLANS = [
 async function callAI(prompt) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method:"POST",
-    headers:{"Content-Type":"application/json","x-api-key":"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","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    headers:{"Content-Type":"application/json","x-api-key":"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","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
     body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1500,
       system:"You are a viral social media content expert. Always respond with valid JSON only. No markdown. No backticks.",
       messages:[{role:"user",content:prompt}]
