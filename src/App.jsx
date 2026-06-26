@@ -46,7 +46,7 @@ async function callAI(prompt) {
   const res = await fetch("/api/claude", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1500,
+    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4000,
       system:"You are a viral social media content expert. Always respond with valid JSON only. No markdown. No backticks.",
       messages:[{role:"user",content:prompt}]
     }),
@@ -203,7 +203,7 @@ export default function App(){
       if(tool==="image"){
         userPrompt=`Generate viral image content for ${pName} ${format}. Tone: ${tone}. Brief: ${prompt}. Return JSON: imagePrompt (200 word photorealistic prompt), negativePrompt, caption, captionV2, captionV3, hook, hookV2, hookV3, hashtags (array 15), viralHashtags (array 5), cta, bestTime, viralityScore (number 70-95), viralityReason, algorithmTip1, algorithmTip2, algorithmTip3, algorithmTip4, algorithmTip5, postingStrategy, competitorInsight, colorPalette (array 3 hex colors)`;
       } else if(tool==="video"){
-        userPrompt=`Generate viral video script for ${pName} ${format} optimized for ${selModel}. Tone: ${tone}. Brief: ${prompt}. Return JSON: videoPrompt (200 word cinematic generation prompt for ${selModel}), script (complete word for word script), scene1time, scene1visual, scene1audio, scene1text, scene2time, scene2visual, scene2audio, scene2text, scene3time, scene3visual, scene3audio, scene3text, hook, hookV2, hookV3, caption, captionV2, hashtags (array 15), cta, duration, musicMood, editingStyle, viralityScore (number 70-95), viralityReason, algorithmTip1, algorithmTip2, algorithmTip3, algorithmTip4, algorithmTip5, postingStrategy, thumbnailPrompt`;
+        userPrompt=`Create viral video content for ${pName} using ${selModel}. Tone: ${tone}. Brief: ${prompt}. Respond with ONLY valid compact JSON, no extra text: {"videoPrompt":"cinematic prompt here","script":"short script here","scene1time":"0-3s","scene1visual":"desc","scene2time":"3-8s","scene2visual":"desc","scene3time":"8-15s","scene3visual":"desc","hook":"hook here","caption":"caption here","hashtags":["tag1","tag2","tag3","tag4","tag5"],"cta":"cta here","musicMood":"mood","viralityScore":85,"viralityReason":"reason","algorithmTip1":"tip","algorithmTip2":"tip","postingStrategy":"strategy"}`;
       } else if(tool==="img2vid"){
         userPrompt=`Generate image to video animation for ${pName}. File: ${uploadedFile?.name||"image"}. Tone: ${tone}. Instructions: ${prompt||"Animate naturally"}. Return JSON: animationPrompt (200 word Runway/Pika prompt), motionDescription, scene1time, scene1motion, scene2time, scene2motion, scene3time, scene3motion, caption, hashtags (array 10), musicMood, hook, cta, viralityScore (number 70-95), viralityReason, postingStrategy`;
       } else if(tool==="aud2vid"){
