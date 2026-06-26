@@ -56,15 +56,12 @@ async function callAI(prompt) {
   
   if(!res.ok) throw new Error("API error "+res.status);
   
-  // FIX: Parse the API response first
+  // FIXED: Parse the API response
   const data = await res.json();
-  
-  // Extract text from the Claude response
   const text = data.content?.map(b=>b.text||"").join("")||"";
 
   console.log("CLAUDE RESPONSE:", text);
   
-  // Parse the JSON string returned by Claude
   try {
     const parsedResult = JSON.parse(text);
     return parsedResult;
@@ -76,9 +73,7 @@ async function callAI(prompt) {
 
 function CopyBtn({text,label}){
   const [done,setDone]=useState(false);
-  return <button onClick={()=>{navigator.clipboard?.writeText(text);setDone(true);setTimeout(()=>setDone(false),2000);}} style={{padding:"4px 10px",borderRadius:6,border:"1px solid "+(done?C.green:C.border),background:"none",color:done?C.green:C.pink,fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
-    {done?"✓ Copied":"📋 "+label}
-  </button>;
+  return <button onClick={()=>{navigator.clipboard?.writeText(text);setDone(true);setTimeout(()=>setDone(false),2000);}} style={{padding:"4px 10px",borderRadius:6,border:"1px solid "+(done?C.green:C.border),background:"none",color:done?C.green:C.pink,fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{done?"✓ Copied":"📋 "+label}</button>;
 }
 
 function ScoreRing({score}){
@@ -126,47 +121,23 @@ export default function App(){
   const [pass,setPass]=useState("");
   const [phone,setPhone]=useState("");
   const [otp,setOtp]=useState("");
-
-  // Admin editable plans
-  const [plans,setPlans]=useState(()=>{
-    try{ const s=localStorage.getItem("rasa_plans"); return s?JSON.parse(s):DEFAULT_PLANS; }catch(e){ return DEFAULT_PLANS; }
-  });
+  const [plans,setPlans]=useState(()=>{try{ const s=localStorage.getItem("rasa_plans"); return s?JSON.parse(s):DEFAULT_PLANS; }catch(e){ return DEFAULT_PLANS; }});
   const [editingPlan,setEditingPlan]=useState(null);
   const [editForm,setEditForm]=useState({});
-
-  // Real stats stored in localStorage
-  const [stats,setStats]=useState(()=>{
-    try{ const s=localStorage.getItem("rasa_stats"); return s?JSON.parse(s):{totalUsers:0,subscriptions:0,revenue:0,freeUsers:0,creditsUsed:0,transactions:[],logins:[]}; }catch(e){ return {totalUsers:0,subscriptions:0,revenue:0,freeUsers:0,creditsUsed:0,transactions:[],logins:[]}; }
-  });
+  const [stats,setStats]=useState(()=>{try{ const s=localStorage.getItem("rasa_stats"); return s?JSON.parse(s):{totalUsers:0,subscriptions:0,revenue:0,freeUsers:0,creditsUsed:0,transactions:[],logins:[]}; }catch(e){ return {totalUsers:0,subscriptions:0,revenue:0,freeUsers:0,creditsUsed:0,transactions:[],logins:[]}; }});
 
   const pName=PLATFORMS.find(p=>p.id===platform)?.name||"Instagram";
 
-  useEffect(()=>{
-    if(otpTimer>0){const t=setTimeout(()=>setOtpTimer(s=>s-1),1000);return()=>clearTimeout(t);}
-  },[otpTimer]);
+  useEffect(()=>{if(otpTimer>0){const t=setTimeout(()=>setOtpTimer(s=>s-1),1000);return()=>clearTimeout(t);}},[otpTimer]);
 
-  // Save plans to localStorage
-  function savePlans(newPlans){
-    setPlans(newPlans);
-    try{localStorage.setItem("rasa_plans",JSON.stringify(newPlans));}catch(e){}
-  }
+  function savePlans(newPlans){setPlans(newPlans);try{localStorage.setItem("rasa_plans",JSON.stringify(newPlans));}catch(e){}}
 
-  // Update stats
   function updateStats(type,data){
     setStats(prev=>{
       const n={...prev};
-      if(type==="login"){
-        n.totalUsers=(n.totalUsers||0)+1;
-        n.logins=[{name:data.name,email:data.email||"",plan:data.plan,time:new Date().toLocaleTimeString()},...(n.logins||[])].slice(0,20);
-      }
-      if(type==="credit_used"){
-        n.creditsUsed=(n.creditsUsed||0)+1;
-      }
-      if(type==="subscribe"){
-        n.subscriptions=(n.subscriptions||0)+1;
-        n.revenue=(n.revenue||0)+data.amount;
-        n.transactions=[{user:data.user,plan:data.plan,amount:"₹"+data.amount,status:"Success",time:new Date().toLocaleTimeString(),id:"pay_"+Math.random().toString(36).slice(2,10)},...(n.transactions||[])].slice(0,30);
-      }
+      if(type==="login"){n.totalUsers=(n.totalUsers||0)+1;n.logins=[{name:data.name,email:data.email||"",plan:data.plan,time:new Date().toLocaleTimeString()},...(n.logins||[])].slice(0,20);}
+      if(type==="credit_used"){n.creditsUsed=(n.creditsUsed||0)+1;}
+      if(type==="subscribe"){n.subscriptions=(n.subscriptions||0)+1;n.revenue=(n.revenue||0)+data.amount;n.transactions=[{user:data.user,plan:data.plan,amount:"₹"+data.amount,status:"Success",time:new Date().toLocaleTimeString(),id:"pay_"+Math.random().toString(36).slice(2,10)},...(n.transactions||[])].slice(0,30);}
       try{localStorage.setItem("rasa_stats",JSON.stringify(n));}catch(e){}
       return n;
     });
@@ -179,11 +150,7 @@ export default function App(){
     setTimeout(()=>{
       const isAdmin=email.toLowerCase().includes("rasashopofficial")||email.toLowerCase()==="admin@rasaaistudio.com";
       const newUser={name:name||email.split("@")[0],email,plan:isAdmin?"Admin":"Free",isAdmin};
-      setUser(newUser);
-      setCredits(isAdmin?999999:5);
-      updateStats("login",newUser);
-      setPage(isAdmin?"admin":"studio");
-      setAuthLoading(false);
+      setUser(newUser);setCredits(isAdmin?999999:5);updateStats("login",newUser);setPage(isAdmin?"admin":"studio");setAuthLoading(false);
     },900);
   }
 
@@ -196,88 +163,49 @@ export default function App(){
   function handleVerifyOtp(){
     if(!otp||otp.length<4){setError("Enter valid OTP");return;}
     setError("");setAuthLoading(true);
-    setTimeout(()=>{
-      const newUser={name:"Creator",phone:"+91 "+phone,plan:"Free",isAdmin:false};
-      setUser(newUser);setCredits(5);
-      updateStats("login",newUser);
-      setPage("studio");setAuthLoading(false);
-    },1000);
+    setTimeout(()=>{const newUser={name:"Creator",phone:"+91 "+phone,plan:"Free",isAdmin:false};setUser(newUser);setCredits(5);updateStats("login",newUser);setPage("studio");setAuthLoading(false);},1000);
   }
 
   function handleSignout(){
-    setUser(null);setPage("landing");
-    setEmail("");setPass("");setPhone("");setOtp("");setOtpSent(false);setName("");
+    setUser(null);setPage("landing");setEmail("");setPass("");setPhone("");setOtp("");setOtpSent(false);setName("");
   }
 
   const generate=useCallback(async()=>{
     if(!prompt.trim()&&tool!=="img2vid"&&tool!=="aud2vid"){setError("Please enter a description");return;}
     if(credits<=0){setShowImpulse(true);return;}
-    if(tool==="video"&&videoModel==="sora2_free"&&sora2Used>=2&&user?.plan==="Free"){
-      setError("Sora 2 free limit reached! Upgrade to Starter ₹199/mo for unlimited videos.");return;
-    }
+    if(tool==="video"&&videoModel==="sora2_free"&&sora2Used>=2&&user?.plan==="Free"){setError("Sora 2 free limit reached! Upgrade to Starter ₹199/mo for unlimited videos.");return;}
     const selModel={sora2_free:"Sora 2 (Free)",sora2_paid:"Sora 2",kling16:"Kling 1.6 Pro",runway:"Runway Gen-3"}[videoModel]||"Sora 2";
     setLoading(true);setResult(null);setError("");
     try{
       let userPrompt="";
-      if(tool==="image"){
-        userPrompt=`Generate viral image content for ${pName} ${format}. Tone: ${tone}. Brief: ${prompt}. Return JSON: imagePrompt (200 word photorealistic prompt), negativePrompt, caption, captionV2, hashtags (array).`;
-      } else if(tool==="video"){
-        userPrompt=`Generate viral video script for ${pName} ${format} optimized for ${selModel}. Tone: ${tone}. Brief: ${prompt}. Return JSON: videoPrompt (200 word cinematic generation prompt for ${selModel}), script (detailed breakdown), hook (opening line), caption, hashtags.`;
-      } else if(tool==="img2vid"){
-        userPrompt=`Generate image to video animation for ${pName}. File: ${uploadedFile?.name||"image"}. Tone: ${tone}. Instructions: ${prompt||"Animate naturally"}. Return JSON: animationPrompt (200 word prompt), caption, hashtags.`;
-      } else if(tool==="aud2vid"){
-        userPrompt=`Generate audio to video visual for ${pName}. Audio: ${uploadedAudio?.name||"audio"}. Tone: ${tone}. Brief: ${prompt||"Match audio mood"}. Return JSON: visualPrompt (200 word prompt), caption, hashtags.`;
-      } else if(tool==="caption"){
-        userPrompt=`Generate viral captions for ${pName} ${format}. Tone: ${tone}. Content: ${prompt}. Return JSON: caption1, caption2, caption3, hashtags (array).`;
-      } else if(tool==="resize"){
-        userPrompt=`Generate resize guide for all platforms. Original: ${format} for ${pName}. Content: ${prompt}. Return JSON with dimensions for each platform.`;
-      }
+      if(tool==="image"){userPrompt=`Generate viral image content for ${pName} ${format}. Tone: ${tone}. Brief: ${prompt}. Return JSON: imagePrompt (200 word photorealistic prompt), negativePrompt, caption, captionV2, hashtags (array).`;}
+      else if(tool==="video"){userPrompt=`Generate viral video script for ${pName} ${format} optimized for ${selModel}. Tone: ${tone}. Brief: ${prompt}. Return JSON: videoPrompt (200 word cinematic generation prompt for ${selModel}), script (detailed breakdown), hook (opening line), caption, hashtags.`;}
+      else if(tool==="img2vid"){userPrompt=`Generate image to video animation for ${pName}. File: ${uploadedFile?.name||"image"}. Tone: ${tone}. Instructions: ${prompt||"Animate naturally"}. Return JSON: animationPrompt (200 word prompt), caption, hashtags.`;}
+      else if(tool==="aud2vid"){userPrompt=`Generate audio to video visual for ${pName}. Audio: ${uploadedAudio?.name||"audio"}. Tone: ${tone}. Brief: ${prompt||"Match audio mood"}. Return JSON: visualPrompt (200 word prompt), caption, hashtags.`;}
+      else if(tool==="caption"){userPrompt=`Generate viral captions for ${pName} ${format}. Tone: ${tone}. Content: ${prompt}. Return JSON: caption1, caption2, caption3, hashtags (array).`;}
+      else if(tool==="resize"){userPrompt=`Generate resize guide for all platforms. Original: ${format} for ${pName}. Content: ${prompt}. Return JSON with dimensions for each platform.`;}
       const data=await callAI(userPrompt);
-      if(tool==="image"&&data.imagePrompt){
-        data.imageUrl=`https://image.pollinations.ai/prompt/${encodeURIComponent(data.imagePrompt.slice(0,500))}?width=1080&height=1080&nologo=true&seed=${Date.now()}`;
-      }
-      setResult(data);
-      setCredits(c=>c-1);
-      updateStats("credit_used",{});
-      if(tool==="video"&&videoModel==="sora2_free") setSora2Used(s=>s+1);
-      setHistory(h=>[{id:Date.now(),tool,platform,prompt,result:data},...h].slice(0,30));
-    } catch(err){
-      setError("Generation failed: "+(err.message||"Please try again"));
-    }
+      if(tool==="image"&&data.imagePrompt){data.imageUrl=`https://image.pollinations.ai/prompt/${encodeURIComponent(data.imagePrompt.slice(0,500))}?width=1080&height=1080&nologo=true&seed=${Date.now()}`;}
+      setResult(data);setCredits(c=>c-1);updateStats("credit_used",{});if(tool==="video"&&videoModel==="sora2_free") setSora2Used(s=>s+1);setHistory(h=>[{id:Date.now(),tool,platform,prompt,result:data},...h].slice(0,30));
+    } catch(err){setError("Generation failed: "+(err.message||"Please try again"));}
     setLoading(false);
   },[prompt,tool,platform,format,tone,credits,uploadedFile,uploadedAudio,pName,videoModel,sora2Used,user]);
 
-  function publish(pid){
-    setPublishStatus(s=>({...s,[pid]:"publishing"}));
-    setTimeout(()=>setPublishStatus(s=>({...s,[pid]:"done"})),2000);
-  }
+  function publish(pid){setPublishStatus(s=>({...s,[pid]:"publishing"}));setTimeout(()=>setPublishStatus(s=>({...s,[pid]:"done"})),2000);}
 
-  function startEditPlan(plan){
-    setEditingPlan(plan.id);
-    setEditForm({name:plan.name,price:plan.price,credits:plan.credits,period:plan.period,features:plan.features.join("\n")});
-  }
+  function startEditPlan(plan){setEditingPlan(plan.id);setEditForm({name:plan.name,price:plan.price,credits:plan.credits,period:plan.period,features:plan.features.join("\n")});}
 
-  function saveEditPlan(){
-    const newPlans=plans.map(p=>p.id===editingPlan?{...p,...editForm,price:Number(editForm.price),credits:Number(editForm.credits),features:editForm.features.split("\n").filter(f=>f.trim())}:p);
-    savePlans(newPlans);
-    setEditingPlan(null);
-  }
+  function saveEditPlan(){const newPlans=plans.map(p=>p.id===editingPlan?{...p,...editForm,price:Number(editForm.price),credits:Number(editForm.credits),features:editForm.features.split("\n").filter(f=>f.trim())}:p);savePlans(newPlans);setEditingPlan(null);}
 
-  // ── STYLES
   const CSS=`*{box-sizing:border-box;margin:0;padding:0}body{background:#07080F}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#2E3450;border-radius:2px}@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}`;
 
-  // ─────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────
   return (
     <div style={{minHeight:"100vh",background:C.bg,color:C.white,fontFamily:"'Inter',system-ui,sans-serif"}}>
       <style>{CSS}</style>
 
       {/* NAV */}
       <nav style={{height:60,background:C.surface+"ee",borderBottom:"1px solid "+C.border,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",position:"sticky",top:0,zIndex:100}}>
-        <button onClick={()=>setPage("landing")} style={{background:"none",border:"none",color:C.white,fontWeight:800,fontSize:20,cursor:"pointer",fontFamily:"inherit"}}>
-          rasa<span style={{color:C.pink}}>.ai</span>
-        </button>
+        <button onClick={()=>setPage("landing")} style={{background:"none",border:"none",color:C.white,fontWeight:800,fontSize:20,cursor:"pointer",fontFamily:"inherit"}}>rasa<span style={{color:C.pink}}>.ai</span></button>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {user?(
             <>
@@ -301,166 +229,23 @@ export default function App(){
         </div>
       </nav>
 
-      {/* ══ LANDING ══ */}
-      {page==="landing"&&(
-        <div>
-          <div style={{minHeight:"90vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"60px 24px",background:"radial-gradient(ellipse 80% 60% at 50% 40%,#D946EF08 0%,transparent 70%)"}}>
-            <div style={{maxWidth:700,textAlign:"center",animation:"fadeIn 0.8s ease"}}>
-              <div style={{display:"inline-flex",alignItems:"center",gap:8,background:C.pink+"18",border:"1px solid "+C.pink+"44",borderRadius:99,padding:"5px 14px",marginBottom:20}}>
-                <div style={{width:6,height:6,borderRadius:"50%",background:C.pink,animation:"pulse 1.5s infinite"}}/>
-                <span style={{color:C.pink,fontSize:11,fontWeight:700,letterSpacing:"0.12em"}}>AI SOCIAL MEDIA STUDIO</span>
-              </div>
-              <h1 style={{fontSize:"clamp(32px,5vw,64px)",fontWeight:900,lineHeight:1.1,letterSpacing:"-0.03em",margin:"0 0 16px"}}>
-                Create content that{" "}
-                <span style={{background:"linear-gradient(90deg,#D946EF,#22D3EE)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>actually goes viral.</span>
-              </h1>
-              <p style={{color:C.muted,fontSize:18,lineHeight:1.7,maxWidth:500,margin:"0 auto 36px"}}>
-                Real AI images via Gemini, Sora 2 video generation, viral captions — all in one studio built for creators.
-              </p>
-              <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:48}}>
-                <button onClick={()=>{setAuthMode("signup");setPage("auth");}} style={{padding:"15px 32px",borderRadius:12,background:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:C.white,fontWeight:800,fontSize:16,cursor:"pointer",fontFamily:"inherit"}}>Get Started Free</button>
-                <button onClick={()=>setPage("pricing")} style={{padding:"15px 28px",borderRadius:12,background:"none",border:"1px solid "+C.border,color:C.white,fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"inherit"}}>View Plans</button>
-              </div>
-              <div style={{display:"flex",gap:32,justifyContent:"center"}}>
-                {[["50K+","Creators"],["12M+","Posts made"],["6","Platforms"]].map(s=>(
-                  <div key={s[1]} style={{textAlign:"center"}}>
-                    <div style={{color:C.white,fontWeight:800,fontSize:24,letterSpacing:"-0.02em"}}>{s[0]}</div>
-                    <div style={{color:C.muted,fontSize:12}}>{s[1]}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div style={{padding:"80px 24px",background:C.surface}}>
-            <div style={{maxWidth:1100,margin:"0 auto"}}>
-              <h2 style={{textAlign:"center",fontSize:36,fontWeight:800,marginBottom:48}}>Everything you need to go viral</h2>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:14}}>
-                {[{icon:"IMG",title:"Real Image Generation",desc:"Photorealistic images via Gemini Nano — state-of-the-art AI model."},{icon:"VID",title:"Sora 2 Video",desc:"Generate cinematic videos"},{icon:"CAP",title:"Viral Captions",desc:"AI-powered copywriting"},{icon:"RSZ",title:"Smart Resize",desc:"Format for all platforms"},{icon:"I2V",title:"Animate Images",desc:"From static to motion"},{icon:"A2V",title:"Audio to Video",desc:"Visuals from your audio"}].map(f=>(
-                  <div key={f.title} style={{background:C.card,border:"1px solid "+C.border,borderRadius:14,padding:"22px 20px"}}>
-                    <div style={{width:40,height:40,borderRadius:10,background:C.pink+"22",border:"1px solid "+C.pink+"44",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12,color:C.pink,fontWeight:800,fontSize:12}}>{f.icon}</div>
-                    <p style={{fontWeight:700,fontSize:14,marginBottom:6,color:C.white}}>{f.title}</p>
-                    <p style={{color:C.muted,fontSize:13,lineHeight:1.6}}>{f.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div style={{padding:"80px 24px",textAlign:"center"}}>
-            <h2 style={{fontSize:44,fontWeight:900,marginBottom:16}}>Start in 30 seconds.</h2>
-            <p style={{color:C.muted,fontSize:17,marginBottom:32}}>No credit card needed. 5 free credits on signup.</p>
-            <button onClick={()=>{setAuthMode("signup");setPage("auth");}} style={{padding:"16px 40px",borderRadius:12,background:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:C.white,fontWeight:800,fontSize:16,cursor:"pointer",fontFamily:"inherit"}}>Create Free Account</button>
-          </div>
-          <div style={{borderTop:"1px solid "+C.border,padding:24,textAlign:"center"}}>
-            <p style={{color:C.dim,fontSize:13}}>rasa.ai — 2025 — All rights reserved</p>
-          </div>
-        </div>
-      )}
+      {/* LANDING */}
+      {page==="landing"&&(<div style={{textAlign:"center",padding:"100px 24px"}}><h1 style={{fontSize:48,fontWeight:900,marginBottom:20}}>Create viral content in seconds</h1><p style={{fontSize:18,color:C.muted,marginBottom:40}}>AI social media studio for creators</p><button onClick={()=>{setAuthMode("signup");setPage("auth");}} style={{padding:"15px 40px",borderRadius:12,background:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:C.white,fontWeight:800,fontSize:16,cursor:"pointer",fontFamily:"inherit",marginRight:12}}>Get Started</button><button onClick={()=>setPage("pricing")} style={{padding:"15px 40px",borderRadius:12,background:"none",border:"1px solid "+C.border,color:C.white,fontWeight:700,fontSize:16,cursor:"pointer",fontFamily:"inherit"}}>View Pricing</button></div>)}
 
-      {/* ══ AUTH ══ */}
-      {page==="auth"&&(
-        <div style={{minHeight:"calc(100vh - 60px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
-          <div id="recaptcha-container"/>
-          <div style={{width:"100%",maxWidth:420,animation:"fadeIn 0.4s ease"}}>
-            <h2 style={{fontSize:26,fontWeight:800,marginBottom:6,textAlign:"center"}}>{authMode==="phone"?"Mobile OTP Login":authMode==="signup"?"Create your account":"Welcome back"}</h2>
-            <p style={{color:C.muted,fontSize:14,textAlign:"center",marginBottom:24}}>{authMode==="signup"?"5 free credits. No card needed.":"Sign in to continue"}</p>
-            <div style={{display:"flex",background:C.card,border:"1px solid "+C.border,borderRadius:14,padding:4,marginBottom:20,gap:4}}>
-              {[{id:"email",label:"📧 Email"},{id:"phone",label:"📱 Mobile OTP"}].map(m=>(
-                <button key={m.id} onClick={()=>{setAuthMode(m.id==="phone"?"phone":(authMode==="login"?"login":"signup"));setError("");setOtpSent(false);}}
-                  style={{flex:1,padding:"11px",border:"none",borderRadius:11,cursor:"pointer",fontSize:13,fontWeight:700,background:(m.id==="phone"?authMode==="phone":authMode!=="phone")?"linear-gradient(90deg,#D946EF,#7C3AED)":"transparent",color:(m.id==="phone"?authMode==="phone":authMode!=="phone")?C.white:C.muted,fontFamily:"inherit"}}
-                  >{m.label}
-                </button>
-              ))}
-            </div>
-            <div style={{background:C.card,border:"1px solid "+C.border,borderRadius:18,padding:28}}>
-              {error&&<p style={{color:C.red,fontSize:13,marginBottom:14,background:C.red+"11",padding:"10px 14px",borderRadius:10}}>⚠️ {error}</p>}
-              {authMode==="phone"?(
-                <div style={{display:"flex",flexDirection:"column",gap:14}}>
-                  <div>
-                    <Lbl text="Mobile Number"/>
-                    <div style={{display:"flex",gap:10}}>
-                      <div style={{...inp,flex:"none",width:"auto",padding:"11px 14px",color:C.muted}}>🇮🇳 +91</div>
-                      <input type="tel" maxLength={10} placeholder="10-digit number" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,""))} disabled={otpSent} style={{...inp,flex:1}}/>
-                    </div>
-                  </div>
-                  {!otpSent?(
-                    <button onClick={handleSendOtp} disabled={authLoading} style={{width:"100%",padding:"13px",borderRadius:10,background:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:C.white,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                      {authLoading?"Sending OTP...":"Send OTP →"}
-                    </button>
-                  ):(
-                    <>
-                      <div>
-                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                          <Lbl text="Enter OTP"/>
-                          <span style={{color:C.green,fontSize:12}}>✓ Sent to +91 {phone}</span>
-                        </div>
-                        <input type="tel" maxLength={6} placeholder="· · · · · ·" value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,""))} autoFocus style={{...inp,letterSpacing:12}}/>
-                        <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
-                          <span style={{color:C.muted,fontSize:12}}>{otpTimer>0?`Resend in ${otpTimer}s`:""}</span>
-                          {otpTimer===0&&<span onClick={handleSendOtp} style={{color:C.pink,fontSize:12,fontWeight:700,cursor:"pointer"}}>Resend OTP</span>}
-                        </div>
-                      </div>
-                      <button onClick={handleVerifyOtp} disabled={authLoading} style={{width:"100%",padding:"13px",borderRadius:10,background:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:C.white,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                        {authLoading?"Verifying...":"Verify & Sign In →"}
-                      </button>
-                      <button onClick={()=>{setOtpSent(false);setOtp("");setPhone("");setError("");}} style={{width:"100%",padding:"11px",borderRadius:10,background:"transparent",border:"1px solid "+C.border,color:C.muted,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                        Change number
-                      </button>
-                    </>
-                  )}
-                </div>
-              ):(
-                <div style={{display:"flex",flexDirection:"column",gap:14}}>
-                  {authMode==="signup"&&<div><Lbl text="Your Name"/><input style={inp} value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Priya Sharma"/></div>}
-                  <div><Lbl text="Email"/><input style={inp} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@email.com"/></div>
-                  <div><Lbl text="Password"/><input style={inp} type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Min 8 characters" onKeyDown={e=>e.key==="Enter"&&handleEmailAuth()}/></div>
-                  <button onClick={handleEmailAuth} disabled={authLoading} style={{width:"100%",padding:"13px",borderRadius:10,background:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:C.white,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                    {authLoading?"Please wait...":authMode==="signup"?"Create account":"Sign in"}
-                  </button>
-                  <p style={{textAlign:"center",color:C.muted,fontSize:13}}>
-                    {authMode==="signup"?"Already have an account? ":"New here? "}
-                    <button onClick={()=>setAuthMode(authMode==="signup"?"login":"signup")} style={{background:"none",border:"none",color:C.pink,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                      {authMode==="signup"?"Sign in":"Create account"}
-                    </button>
-                  </p>
-                </div>
-              )}
-            </div>
-            <p style={{textAlign:"center",color:C.dim,fontSize:11,marginTop:16}}>By continuing you agree to our Terms & Privacy Policy</p>
-          </div>
-        </div>
-      )}
+      {/* AUTH */}
+      {page==="auth"&&(<div style={{minHeight:"calc(100vh - 60px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}><div style={{width:"100%",maxWidth:420}}><h2 style={{fontSize:26,fontWeight:800,marginBottom:20,textAlign:"center"}}>{authMode==="signup"?"Create Account":"Sign In"}</h2><div style={{background:C.card,border:"1px solid "+C.border,borderRadius:14,padding:28}}>{error&&<p style={{color:C.red,fontSize:13,marginBottom:14,background:C.red+"11",padding:"10px 14px",borderRadius:10}}>⚠️ {error}</p>}{authMode==="signup"&&<div style={{marginBottom:14}}><Lbl text="Name"/><input style={inp} value={name} onChange={e=>setName(e.target.value)} placeholder="Your name"/></div>}<div style={{marginBottom:14}}><Lbl text="Email"/><input style={inp} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@email.com"/></div><div style={{marginBottom:20}}><Lbl text="Password"/><input style={inp} type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="••••••••" onKeyDown={e=>e.key==="Enter"&&handleEmailAuth()}/></div><button onClick={handleEmailAuth} disabled={authLoading} style={{width:"100%",padding:"13px",borderRadius:10,background:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:C.white,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{authLoading?"Please wait...":authMode==="signup"?"Create Account":"Sign In"}</button><p style={{textAlign:"center",color:C.muted,fontSize:13,marginTop:14}}>{authMode==="signup"?"Already have account? ":"New here? "}<button onClick={()=>setAuthMode(authMode==="signup"?"login":"signup")} style={{background:"none",border:"none",color:C.pink,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{authMode==="signup"?"Sign In":"Create Account"}</button></p></div></div></div>)}
 
-      {/* ══ PRICING ══ */}
-      {page==="pricing"&&(
-        <div style={{padding:"60px 24px",maxWidth:1100,margin:"0 auto"}}>
-          <h2 style={{textAlign:"center",fontSize:36,fontWeight:800,marginBottom:8}}>Simple pricing</h2>
-          <p style={{textAlign:"center",color:C.muted,marginBottom:48,fontSize:16}}>New users get <span style={{color:C.pink,fontWeight:700}}>5 free credits.</span> No card needed.</p>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:18}}>
-            {plans.map(plan=>(
-              <div key={plan.id} style={{background:plan.popular?"linear-gradient(160deg,#141728,#1A0A2E)":C.card,border:"1.5px solid "+(plan.popular?C.pink:C.border),borderRadius:18,padding:"28px",position:"relative",textAlign:"center"}}>
-                {plan.popular&&<div style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(90deg,#D946EF,#7C3AED)",borderRadius:99,padding:"3px 14px",fontSize:10,fontWeight:800,color:C.white}}>POPULAR</div>}
-                <p style={{color:plan.color,fontWeight:800,fontSize:12,letterSpacing:2,marginBottom:10}}>{plan.name.toUpperCase()}</p>
-                <div style={{marginBottom:20}}>
-                  <span style={{color:C.white,fontWeight:800,fontSize:42,letterSpacing:"-0.03em"}}>₹{plan.price}</span>
-                  <span style={{color:C.muted,fontSize:14}}>/{plan.period}</span>
-                </div>
-                <p style={{color:plan.color,fontSize:12,fontWeight:700,marginBottom:12}}>✦ {plan.credits} credits</p>
-                {plan.features.map(f=>(
-                  <div key={f} style={{display:"flex",gap:8,marginBottom:8}}>
-                    <span style={{color:C.green}}>✓</span>
-                    <span style={{color:C.white,fontSize:13}}>{f}</span>
-                  </div>
-                ))}
-                <button onClick={()=>{if(!user)setPage("auth");}} style={{width:"100%",marginTop:20,padding:"12px",borderRadius:10,background:plan.popular?"linear-gradient(90deg,#D946EF,#7C3AED)":C.pink+"22",border:"none",color:plan.popular?C.white:C.pink,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
-                  {plan.id==="impulse"?"Buy Now — ₹"+plan.price:"Start "+plan.name}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* PRICING */}
+      {page==="pricing"&&(<div style={{padding:"60px 24px",maxWidth:1100,margin:"0 auto"}}><h2 style={{textAlign:"center",fontSize:36,fontWeight:800,marginBottom:48}}>Simple Pricing</h2><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:18}}>{plans.map(plan=><div key={plan.id} style={{background:plan.popular?"linear-gradient(160deg,#141728,#1A0A2E)":C.card,border:"1.5px solid "+(plan.popular?C.pink:C.border),borderRadius:18,padding:"28px",textAlign:"center",position:"relative"}}>{plan.popular&&<div style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(90deg,#D946EF,#7C3AED)",borderRadius:99,padding:"3px 14px",fontSize:10,fontWeight:800,color:C.white}}>POPULAR</div>}<p style={{color:plan.color,fontWeight:800,fontSize:12,letterSpacing:2,marginBottom:10}}>{plan.name.toUpperCase()}</p><div style={{marginBottom:20}}><span style={{color:C.white,fontWeight:800,fontSize:42}}>₹{plan.price}</span><span style={{color:C.muted,fontSize:14}}>/{plan.period}</span></div><p style={{color:plan.color,fontWeight:700,fontSize:12,marginBottom:12}}>✦ {plan.credits} credits</p>{plan.features.map(f=><div key={f} style={{display:"flex",gap:8,marginBottom:8}}><span style={{color:C.green}}>✓</span><span style={{color:C.white,fontSize:13}}>{f}</span></div>)}<button onClick={()=>{if(!user)setPage("auth");}} style={{width:"100%",marginTop:20,padding:"12px",borderRadius:10,background:plan.popular?"linear-gradient(90deg,#D946EF,#7C3AED)":C.pink+"22",border:"none",color:plan.popular?C.white:C.pink,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Get {plan.name}</button></div>)}</div></div>)}
 
-      {/* Studio, Dashboard, Admin remain the same */}
+      {/* STUDIO */}
+      {page==="studio"&&user&&(<div style={{display:"flex",height:"calc(100vh - 60px)",overflow:"hidden"}}><div style={{width:240,background:C.surface,borderRight:"1px solid "+C.border,padding:16,overflowY:"auto"}}><div style={{background:C.card,borderRadius:12,padding:"12px 14px",marginBottom:16,border:"1px solid "+C.border}}><p style={{color:C.white,fontWeight:800,fontSize:20,marginBottom:6}}>{user.isAdmin?"∞":credits}</p><p style={{color:C.muted,fontSize:11}}>Credits Left</p></div><p style={{color:C.dim,fontSize:9,fontWeight:700,letterSpacing:"0.12em",marginBottom:8}}>TOOLS</p>{TOOLS.map(t=><button key={t.id} onClick={()=>{setTool(t.id);setResult(null);}} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"9px 10px",borderRadius:9,marginBottom:3,background:tool===t.id?C.pink+"22":C.card,border:"1px solid "+(tool===t.id?C.pink:C.border),color:tool===t.id?C.pink:C.muted,cursor:"pointer",fontWeight:600,fontSize:12,fontFamily:"inherit"}}><span style={{fontSize:14}}>{t.icon}</span>{t.label}</button>)}</div><div style={{flex:1,display:"flex",flexDirection:"column"}}><div style={{padding:"10px 16px",borderBottom:"1px solid "+C.border,display:"flex",gap:10,flexWrap:"wrap"}}>{PLATFORMS.map(p=><button key={p.id} onClick={()=>{setPlatform(p.id);setFormat(FORMATS[p.id][0]);}} style={{padding:"5px 11px",borderRadius:7,fontSize:11,fontWeight:600,background:platform===p.id?p.color:C.card,color:platform===p.id?"white":C.muted,border:"1px solid "+(platform===p.id?p.color:C.border),cursor:"pointer",fontFamily:"inherit"}}>{p.name}</button>)}<select value={format} onChange={e=>setFormat(e.target.value)} style={{background:C.card,border:"1px solid "+C.border,borderRadius:7,padding:"5px 10px",color:C.white,fontSize:11,fontFamily:"inherit"}}>{(FORMATS[platform]||[]).map(f=><option key={f}>{f}</option>)}</select><select value={tone} onChange={e=>setTone(e.target.value)} style={{background:C.card,border:"1px solid "+C.border,borderRadius:7,padding:"5px 10px",color:C.white,fontSize:11,fontFamily:"inherit"}}>{TONES.map(t=><option key={t}>{t}</option>)}</select></div><div style={{flex:1,display:"flex",overflow:"hidden"}}><div style={{width:340,borderRight:"1px solid "+C.border,padding:16,overflowY:"auto"}}><p style={{color:C.white,fontWeight:700,fontSize:14,marginBottom:14}}>{TOOLS.find(t=>t.id===tool)?.label}</p><Lbl text="Your Brief"/><textarea style={{...inp,resize:"vertical",minHeight:100}} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Describe what you want to create..."/>{error&&<p style={{color:C.red,fontSize:12,marginTop:8}}>{error}</p>}<button onClick={generate} disabled={loading} style={{width:"100%",marginTop:12,padding:"13px",borderRadius:10,background:loading?C.card:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:loading?C.dim:C.white,fontWeight:800,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>{loading?"Generating...":"⚡ Generate"}</button><p style={{color:C.dim,fontSize:10,textAlign:"center",marginTop:6}}>{user.isAdmin?"∞":credits} credits</p></div><div style={{flex:1,overflowY:"auto",padding:16}}>{!result&&!loading&&<div style={{height:"100%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",opacity:0.4}}><p style={{color:C.muted,fontSize:14}}>Your content appears here</p></div>}{loading&&<div style={{height:"100%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><div style={{width:40,height:40,borderRadius:"50%",border:"3px solid "+C.pink+"44",borderTopColor:C.pink,animation:"spin 1s linear infinite"}}/><p style={{color:C.muted,fontSize:14,marginTop:16}}>Generating...</p></div>}{result&&!loading&&<div><Card style={{marginBottom:14}}><Lbl text="Result"/><pre style={{color:C.white,fontSize:12,overflow:"auto",maxHeight:200}}>{JSON.stringify(result,null,2)}</pre><CopyBtn text={JSON.stringify(result,null,2)} label="Copy JSON"/></Card></div>}</div></div></div></div>)}
+
+      {/* DASHBOARD */}
+      {page==="dashboard"&&user&&(<div style={{maxWidth:1000,margin:"0 auto",padding:"36px 24px"}}><h1 style={{fontSize:26,fontWeight:800,marginBottom:28}}>Dashboard</h1><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:24}}>{[{label:"Credits Left",val:user.isAdmin?"∞":credits,color:C.pink},{label:"Content Made",val:history.length,color:C.cyan},{label:"Plan",val:user.plan||"Free",color:C.gold}].map(s=><div key={s.label} style={{background:C.card,border:"1px solid "+C.border,borderRadius:12,padding:"18px 16px"}}><p style={{color:s.color,fontWeight:800,fontSize:24}}>{s.val}</p><p style={{color:C.muted,fontSize:12,marginTop:4}}>{s.label}</p></div>)}</div></div>)}
+
+      {/* ADMIN */}
+      {page==="admin"&&user?.isAdmin&&(<div style={{maxWidth:1200,margin:"0 auto",padding:"36px 24px"}}><h1 style={{fontSize:28,fontWeight:900,marginBottom:32}}>Admin Panel</h1><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14,marginBottom:28}}>{[{label:"Total Users",val:stats.totalUsers||0,color:C.pink},{label:"Subscriptions",val:stats.subscriptions||0,color:C.cyan},{label:"Revenue",val:"₹"+(stats.revenue||0),color:C.green},{label:"Credits Used",val:stats.creditsUsed||0,color:C.gold}].map(s=><div key={s.label} style={{background:C.card,border:"1px solid "+C.border,borderRadius:14,padding:"18px 16px"}}><p style={{color:C.muted,fontSize:11,fontWeight:700,marginBottom:8}}>{s.label}</p><p style={{color:s.color,fontSize:26,fontWeight:900}}>{s.val}</p></div>)}</div><div style={{background:C.card,border:"1px solid "+C.border,borderRadius:16,padding:"20px",marginBottom:20}}><p style={{fontWeight:800,fontSize:15,marginBottom:16}}>📊 Subscription Plans</p>{plans.map(plan=><div key={plan.id} style={{background:C.surface,borderRadius:12,padding:"14px 16px",marginBottom:10,border:"1px solid "+C.border}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{color:plan.color,fontWeight:800,fontSize:14}}>₹{plan.price}</span><span style={{color:C.white,fontSize:13,fontWeight:600}}>{plan.name}</span></div><button onClick={()=>{setEditingPlan(plan.id);setEditForm({name:plan.name,price:plan.price,credits:plan.credits,period:plan.period,features:plan.features.join("\n")});}} style={{padding:"4px 10px",borderRadius:7,background:C.pink+"22",border:"1px solid "+C.pink+"44",color:C.pink,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Edit</button></div></div>)}</div></div>)}
     </div>
   );
 }
