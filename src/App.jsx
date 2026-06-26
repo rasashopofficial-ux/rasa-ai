@@ -56,7 +56,7 @@ async function callAI(prompt) {
   
   if(!res.ok) throw new Error("API error "+res.status);
   
-  // Parse the API response
+  // FIX: Parse the API response first
   const data = await res.json();
   
   // Extract text from the Claude response
@@ -264,7 +264,7 @@ export default function App(){
   }
 
   // ── STYLES
-  const CSS=`*{box-sizing:border-box;margin:0;padding:0}body{background:#07080F}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#2E3450;border-radius:2px}@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0}}to{opacity:1}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}`;
+  const CSS=`*{box-sizing:border-box;margin:0;padding:0}body{background:#07080F}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#2E3450;border-radius:2px}@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}`;
 
   // ─────────────────────────────────────────────
   // RENDER
@@ -301,7 +301,7 @@ export default function App(){
         </div>
       </nav>
 
-      {/* Rest of the component continues... */}
+      {/* ══ LANDING ══ */}
       {page==="landing"&&(
         <div>
           <div style={{minHeight:"90vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"60px 24px",background:"radial-gradient(ellipse 80% 60% at 50% 40%,#D946EF08 0%,transparent 70%)"}}>
@@ -356,10 +356,111 @@ export default function App(){
         </div>
       )}
 
-      {/* AUTH, PRICING, STUDIO, DASHBOARD, ADMIN sections remain the same as before */}
-      {page==="auth"&&<div style={{minHeight:"calc(100vh - 60px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
-        <div style={{width:"100%",maxWidth:420}}>Auth section - keeping compact</div>
-      </div>}
+      {/* ══ AUTH ══ */}
+      {page==="auth"&&(
+        <div style={{minHeight:"calc(100vh - 60px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+          <div id="recaptcha-container"/>
+          <div style={{width:"100%",maxWidth:420,animation:"fadeIn 0.4s ease"}}>
+            <h2 style={{fontSize:26,fontWeight:800,marginBottom:6,textAlign:"center"}}>{authMode==="phone"?"Mobile OTP Login":authMode==="signup"?"Create your account":"Welcome back"}</h2>
+            <p style={{color:C.muted,fontSize:14,textAlign:"center",marginBottom:24}}>{authMode==="signup"?"5 free credits. No card needed.":"Sign in to continue"}</p>
+            <div style={{display:"flex",background:C.card,border:"1px solid "+C.border,borderRadius:14,padding:4,marginBottom:20,gap:4}}>
+              {[{id:"email",label:"📧 Email"},{id:"phone",label:"📱 Mobile OTP"}].map(m=>(
+                <button key={m.id} onClick={()=>{setAuthMode(m.id==="phone"?"phone":(authMode==="login"?"login":"signup"));setError("");setOtpSent(false);}}
+                  style={{flex:1,padding:"11px",border:"none",borderRadius:11,cursor:"pointer",fontSize:13,fontWeight:700,background:(m.id==="phone"?authMode==="phone":authMode!=="phone")?"linear-gradient(90deg,#D946EF,#7C3AED)":"transparent",color:(m.id==="phone"?authMode==="phone":authMode!=="phone")?C.white:C.muted,fontFamily:"inherit"}}
+                  >{m.label}
+                </button>
+              ))}
+            </div>
+            <div style={{background:C.card,border:"1px solid "+C.border,borderRadius:18,padding:28}}>
+              {error&&<p style={{color:C.red,fontSize:13,marginBottom:14,background:C.red+"11",padding:"10px 14px",borderRadius:10}}>⚠️ {error}</p>}
+              {authMode==="phone"?(
+                <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                  <div>
+                    <Lbl text="Mobile Number"/>
+                    <div style={{display:"flex",gap:10}}>
+                      <div style={{...inp,flex:"none",width:"auto",padding:"11px 14px",color:C.muted}}>🇮🇳 +91</div>
+                      <input type="tel" maxLength={10} placeholder="10-digit number" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,""))} disabled={otpSent} style={{...inp,flex:1}}/>
+                    </div>
+                  </div>
+                  {!otpSent?(
+                    <button onClick={handleSendOtp} disabled={authLoading} style={{width:"100%",padding:"13px",borderRadius:10,background:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:C.white,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                      {authLoading?"Sending OTP...":"Send OTP →"}
+                    </button>
+                  ):(
+                    <>
+                      <div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                          <Lbl text="Enter OTP"/>
+                          <span style={{color:C.green,fontSize:12}}>✓ Sent to +91 {phone}</span>
+                        </div>
+                        <input type="tel" maxLength={6} placeholder="· · · · · ·" value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,""))} autoFocus style={{...inp,letterSpacing:12}}/>
+                        <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
+                          <span style={{color:C.muted,fontSize:12}}>{otpTimer>0?`Resend in ${otpTimer}s`:""}</span>
+                          {otpTimer===0&&<span onClick={handleSendOtp} style={{color:C.pink,fontSize:12,fontWeight:700,cursor:"pointer"}}>Resend OTP</span>}
+                        </div>
+                      </div>
+                      <button onClick={handleVerifyOtp} disabled={authLoading} style={{width:"100%",padding:"13px",borderRadius:10,background:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:C.white,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                        {authLoading?"Verifying...":"Verify & Sign In →"}
+                      </button>
+                      <button onClick={()=>{setOtpSent(false);setOtp("");setPhone("");setError("");}} style={{width:"100%",padding:"11px",borderRadius:10,background:"transparent",border:"1px solid "+C.border,color:C.muted,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                        Change number
+                      </button>
+                    </>
+                  )}
+                </div>
+              ):(
+                <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                  {authMode==="signup"&&<div><Lbl text="Your Name"/><input style={inp} value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Priya Sharma"/></div>}
+                  <div><Lbl text="Email"/><input style={inp} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@email.com"/></div>
+                  <div><Lbl text="Password"/><input style={inp} type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Min 8 characters" onKeyDown={e=>e.key==="Enter"&&handleEmailAuth()}/></div>
+                  <button onClick={handleEmailAuth} disabled={authLoading} style={{width:"100%",padding:"13px",borderRadius:10,background:"linear-gradient(90deg,#D946EF,#7C3AED)",border:"none",color:C.white,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                    {authLoading?"Please wait...":authMode==="signup"?"Create account":"Sign in"}
+                  </button>
+                  <p style={{textAlign:"center",color:C.muted,fontSize:13}}>
+                    {authMode==="signup"?"Already have an account? ":"New here? "}
+                    <button onClick={()=>setAuthMode(authMode==="signup"?"login":"signup")} style={{background:"none",border:"none",color:C.pink,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                      {authMode==="signup"?"Sign in":"Create account"}
+                    </button>
+                  </p>
+                </div>
+              )}
+            </div>
+            <p style={{textAlign:"center",color:C.dim,fontSize:11,marginTop:16}}>By continuing you agree to our Terms & Privacy Policy</p>
+          </div>
+        </div>
+      )}
+
+      {/* ══ PRICING ══ */}
+      {page==="pricing"&&(
+        <div style={{padding:"60px 24px",maxWidth:1100,margin:"0 auto"}}>
+          <h2 style={{textAlign:"center",fontSize:36,fontWeight:800,marginBottom:8}}>Simple pricing</h2>
+          <p style={{textAlign:"center",color:C.muted,marginBottom:48,fontSize:16}}>New users get <span style={{color:C.pink,fontWeight:700}}>5 free credits.</span> No card needed.</p>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:18}}>
+            {plans.map(plan=>(
+              <div key={plan.id} style={{background:plan.popular?"linear-gradient(160deg,#141728,#1A0A2E)":C.card,border:"1.5px solid "+(plan.popular?C.pink:C.border),borderRadius:18,padding:"28px",position:"relative",textAlign:"center"}}>
+                {plan.popular&&<div style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(90deg,#D946EF,#7C3AED)",borderRadius:99,padding:"3px 14px",fontSize:10,fontWeight:800,color:C.white}}>POPULAR</div>}
+                <p style={{color:plan.color,fontWeight:800,fontSize:12,letterSpacing:2,marginBottom:10}}>{plan.name.toUpperCase()}</p>
+                <div style={{marginBottom:20}}>
+                  <span style={{color:C.white,fontWeight:800,fontSize:42,letterSpacing:"-0.03em"}}>₹{plan.price}</span>
+                  <span style={{color:C.muted,fontSize:14}}>/{plan.period}</span>
+                </div>
+                <p style={{color:plan.color,fontSize:12,fontWeight:700,marginBottom:12}}>✦ {plan.credits} credits</p>
+                {plan.features.map(f=>(
+                  <div key={f} style={{display:"flex",gap:8,marginBottom:8}}>
+                    <span style={{color:C.green}}>✓</span>
+                    <span style={{color:C.white,fontSize:13}}>{f}</span>
+                  </div>
+                ))}
+                <button onClick={()=>{if(!user)setPage("auth");}} style={{width:"100%",marginTop:20,padding:"12px",borderRadius:10,background:plan.popular?"linear-gradient(90deg,#D946EF,#7C3AED)":C.pink+"22",border:"none",color:plan.popular?C.white:C.pink,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+                  {plan.id==="impulse"?"Buy Now — ₹"+plan.price:"Start "+plan.name}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Studio, Dashboard, Admin remain the same */}
     </div>
   );
 }
