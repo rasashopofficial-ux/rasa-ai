@@ -157,8 +157,24 @@ export default function App(){
     if(!email||!pass){setError("Please fill all fields");return;}
     if(authMode==="signup"&&!name){setError("Please enter your name");return;}
     setError("");setAuthLoading(true);
+    // Basic password validation
+    if(authMode==="signup"&&pass.length<6){setError("Password must be at least 6 characters");return;}
     setTimeout(()=>{
       const isAdmin=email.toLowerCase().includes("rasashopofficial")||email.toLowerCase()==="admin@rasaaistudio.com";
+      // Store user credentials in localStorage for validation
+      if(authMode==="signup"){
+        const users=JSON.parse(localStorage.getItem("rasa_users")||"{}");
+        users[email]={password:pass,name:name||email.split("@")[0]};
+        localStorage.setItem("rasa_users",JSON.stringify(users));
+      } else {
+        // Validate password on login
+        if(!isAdmin){
+          const users=JSON.parse(localStorage.getItem("rasa_users")||"{}");
+          if(users[email]&&users[email].password!==pass){
+            setError("Invalid email or password!");setAuthLoading(false);return;
+          }
+        }
+      }
       const newUser={name:name||email.split("@")[0],email,plan:isAdmin?"Admin":"Free",isAdmin};
       setUser(newUser);
       setCredits(isAdmin?999999:5);
@@ -214,8 +230,21 @@ export default function App(){
         userPrompt=`Generate resize guide for all platforms. Original: ${format} for ${pName}. Content: ${prompt}. Return JSON: instagramPost, instagramStory, instagramReel, youtubeThumb, tiktokVideo, facebookPost, twitterCard, linkedinPost, masterCaption, repurposeTip1, repurposeTip2, repurposeTip3`;
       }
       const data=await callAI(userPrompt);
+      
+      // REAL IMAGE GENERATION - Pollinations.ai (Free)
       if(tool==="image"&&data.imagePrompt){
-        data.imageUrl=`https://image.pollinations.ai/prompt/${encodeURIComponent(data.imagePrompt.slice(0,500))}?width=1080&height=1080&nologo=true&seed=${Date.now()}`;
+        const imgPrompt=encodeURIComponent(data.imagePrompt.slice(0,600));
+        const seed=Date.now();
+        data.imageUrl=`https://image.pollinations.ai/prompt/${imgPrompt}?width=1080&height=1080&nologo=true&enhance=true&seed=${seed}`;
+        data.imageUrl2=`https://image.pollinations.ai/prompt/${imgPrompt}?width=1080&height=1350&nologo=true&enhance=true&seed=${seed+1}`;
+        data.imageUrl3=`https://image.pollinations.ai/prompt/${imgPrompt}?width=1080&height=1920&nologo=true&enhance=true&seed=${seed+2}`;
+      }
+      
+      // REAL VIDEO - Pollinations video API
+      if(tool==="video"&&data.videoPrompt){
+        const vidPrompt=encodeURIComponent(data.videoPrompt.slice(0,400));
+        data.videoUrl=`https://video.pollinations.ai/prompt/${vidPrompt}?nologo=true&seed=${Date.now()}`;
+        data.videoThumbUrl=`https://image.pollinations.ai/prompt/${vidPrompt}?width=1920&height=1080&nologo=true&enhance=true&seed=${Date.now()}`;
       }
       setResult(data);
       setCredits(c=>c-1);
@@ -609,12 +638,44 @@ export default function App(){
                     )}
                     {result.imageUrl&&(
                       <Card style={{marginBottom:14}}>
-                        <Lbl text="Generated Image"/>
-                        <img src={result.imageUrl} alt="AI Generated" style={{width:"100%",borderRadius:10,maxHeight:400,objectFit:"cover",display:"block"}} onError={e=>e.target.style.display="none"}/>
-                        <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
-                          <a href={result.imageUrl} target="_blank" rel="noreferrer" style={{padding:"9px 18px",borderRadius:9,background:"linear-gradient(90deg,#D946EF,#7C3AED)",color:C.white,fontWeight:700,fontSize:13,display:"inline-block",textDecoration:"none"}}>⬇ Download Image</a>
-                          <CopyBtn text={result.imagePrompt||""} label="Copy Prompt"/>
+                        <Lbl text="Generated Images (3 Sizes)"/>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+                          {[
+                            {url:result.imageUrl,label:"1:1 Post",size:"1080×1080"},
+                            {url:result.imageUrl2,label:"4:5 Feed",size:"1080×1350"},
+                            {url:result.imageUrl3,label:"9:16 Story",size:"1080×1920"},
+                          ].filter(i=>i.url).map((img,i)=>(
+                            <div key={i} style={{position:"relative"}}>
+                              <img src={img.url} alt={img.label} style={{width:"100%",borderRadius:8,aspectRatio:"1",objectFit:"cover",display:"block"}} onError={e=>e.target.style.display="none"}/>
+                              <div style={{position:"absolute",bottom:0,left:0,right:0,background:"rgba(0,0,0,0.7)",padding:"4px 8px",borderRadius:"0 0 8px 8px",textAlign:"center"}}>
+                                <p style={{color:"#fff",fontSize:10,fontWeight:700}}>{img.label}</p>
+                                <p style={{color:"#aaa",fontSize:9}}>{img.size}</p>
+                              </div>
+                              <a href={img.url} target="_blank" rel="noreferrer" download style={{display:"block",marginTop:4,textAlign:"center",padding:"5px",borderRadius:6,background:C.pink+"22",color:C.pink,fontSize:11,fontWeight:700,textDecoration:"none"}}>⬇ Download</a>
+                            </div>
+                          ))}
                         </div>
+                        <CopyBtn text={result.imagePrompt||""} label="Copy Full Prompt"/>
+                      </Card>
+                    )}
+                    
+                    {result.videoUrl&&(
+                      <Card style={{marginBottom:14}}>
+                        <Lbl text="Generated Video"/>
+                        <video controls style={{width:"100%",borderRadius:10,maxHeight:400,background:"#000",display:"block"}} poster={result.videoThumbUrl}>
+                          <source src={result.videoUrl} type="video/mp4"/>
+                          Your browser does not support video.
+                        </video>
+                        <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
+                          <a href={result.videoUrl} target="_blank" rel="noreferrer" style={{padding:"9px 18px",borderRadius:9,background:"linear-gradient(90deg,#D946EF,#7C3AED)",color:C.white,fontWeight:700,fontSize:13,display:"inline-block",textDecoration:"none"}}>⬇ Download Video</a>
+                          <CopyBtn text={result.videoPrompt||""} label="Copy Video Prompt"/>
+                        </div>
+                        {result.videoThumbUrl&&(
+                          <div style={{marginTop:10}}>
+                            <p style={{color:C.muted,fontSize:11,marginBottom:6}}>Video Thumbnail:</p>
+                            <img src={result.videoThumbUrl} alt="Thumbnail" style={{width:"100%",borderRadius:8,maxHeight:200,objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
+                          </div>
+                        )}
                       </Card>
                     )}
                     {(result.videoPrompt||result.animationPrompt||result.visualPrompt)&&(
